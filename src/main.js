@@ -1,4 +1,5 @@
 import { App } from './core/App.js';
+import { AppGround } from './core/App_ground.js';
 import { LoadingScreen } from './ui/HUD.js';
 
 /**
@@ -11,7 +12,7 @@ const canvas = document.getElementById('viewport');
 
 async function boot() {
     try {
-        const app = new App(canvas);
+        const app = new AppGround(canvas);
         await app.load();
 
         // 方便在控制台里摆弄场景。
