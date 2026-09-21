@@ -1,20 +1,20 @@
 /**
- * Ability sigils for the HUD — drawn inline so they inherit `currentColor` (the
- * slot's `--accent`) and need no image assets.
+ * HUD 的技能徽记——以内联 SVG 绘制，因此继承 `currentColor`（即槽位的
+ * `--accent` 强调色），不需要任何图片资源。
  *
- * A 100×100 box, stroke only, so the mark reads the same at 34px in the ability
- * slot as it does scaled up.
+ * 100×100 的视图盒，只描边不填充，因此这个标记在技能槽的 34px 尺寸下
+ * 与放大后看起来完全一致。
  */
 
 const WRAP = (body) =>
-  `<svg class="glyph-svg" viewBox="0 0 100 100" aria-hidden="true" fill="none"
+    `<svg class="glyph-svg" viewBox="0 0 100 100" aria-hidden="true" fill="none"
      stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
 /**
- * Ice — a six-fold snowflake over a rising lance.
+ * 冰——一支拔地而起的冰枪上叠着一枚六瓣雪花。
  *
- * Three axes at 60°, each with a pair of barbs, and a heavier vertical that runs
- * past the star into a point: the star says frost, the point says skillshot.
+ * 三根互成 60° 的轴线，各带一对倒刺，另有一条更粗的中线穿过星形延成
+ * 尖点：星形表示寒霜，尖点表示指向性技能。
  */
 const ICE = WRAP(`
   <path d="M50 12V88"/>
@@ -29,11 +29,10 @@ const ICE = WRAP(`
 `);
 
 /**
- * Thunder — a bolt struck through a pair of arcs.
+ * 雷——一道闪电贯穿两道弧线。
  *
- * The zigzag is drawn on the same diagonal the cast travels on, and the two
- * open arcs behind it read as the discharge spreading off it. Stroke only, like
- * the snowflake, so the two slots sit at the same visual weight.
+ * 锯齿画在施放轨迹的同一条对角线上，后面两道开口的弧线读起来像放电
+ * 正从闪电上扩散开来。与雪花一样只描边，让两个槽位保持同等的视觉权重。
  */
 const THUNDER = WRAP(`
   <path d="M60 10L30 52H49L40 90L72 45H52L60 10Z"/>
@@ -42,11 +41,11 @@ const THUNDER = WRAP(`
 `);
 
 /**
- * Meteor — a cracked ball trailing fire.
+ * 陨石——一颗开裂的圆球拖着火焰。
  *
- * The circle sits forward and low with three seams splitting it, and three
- * tapering streaks run back up the same diagonal the other two sigils are drawn
- * on, so the slot reads as "the rock, thrown" at 34px.
+ * 圆形位于偏前偏低的位置，三条裂纹将其分割；三条渐细的拖尾沿另外两个
+ * 徽记所用的同一条对角线向后上方延伸，让整个槽位在 34px 下读起来就是
+ * "一块被掷出的石头"。
  */
 const METEOR = WRAP(`
   <circle cx="62" cy="62" r="24"/>
@@ -55,12 +54,11 @@ const METEOR = WRAP(`
 `);
 
 /**
- * Beam — a charge held in a bracket, firing a cone.
+ * 光束——托在括号中蓄力的一团光球，射出一个锥形。
  *
- * The orb sits low-left where the other three sigils start their diagonal, two
- * open brackets behind it read as the hands holding it, and three tapering rays
- * open out to the upper right with a single wave threaded through them: the
- * column, and the coil wrapped around it.
+ * 光球位于左下——另外三个徽记都是从这里开始画对角线的；后面两道开口
+ * 括号读起来像捧着它的双手；三条渐细的光线向右上张开，中间穿过一道
+ * 波纹：那是光柱，以及缠绕在柱上的线圈。
  */
 const BEAM = WRAP(`
   <circle cx="27" cy="66" r="11"/>
@@ -71,13 +69,12 @@ const BEAM = WRAP(`
 `);
 
 /**
- * Snare — a ring with a bolt standing in it.
+ * 雷网——一个圆环，环中立着一道闪电。
  *
- * The only sigil in the set built around a *circle you look into* rather than a
- * diagonal, because that is the one thing this slot has to say before anything
- * else: it is not a skillshot, it is a footprint. The ellipse is the boundary
- * seen in perspective, four arcs step around it where the rim current runs, and
- * the zigzag rises out of the middle.
+ * 全套徽记里唯一一个围绕"供你俯视的圆圈"来构建的，而不是一条对角线，
+ * 因为这个槽位首先要表达的就只有一件事：它不是指向性技能，而是一个
+ * 落点区域。椭圆是从透视中看到的边界，四段弧线沿着电弧走过的边缘
+ * 分布，锯齿则从中央升起。
  */
 const SNARE = WRAP(`
   <ellipse cx="50" cy="70" rx="38" ry="15"/>
@@ -87,14 +84,12 @@ const SNARE = WRAP(`
 `);
 
 /**
- * Glacier — a crown of blades standing on a ring.
+ * 冰冠——一圈环上立起的刃冠。
  *
- * The second sigil built around a *circle you look into*, because it is the
- * second far cast and that is the first thing the slot has to say. Where the
- * Snare stands one bolt in the middle of its ellipse, this one stands the ring
- * itself up: five blades of uneven height rising off the boundary with the
- * spire tallest in the middle, which is the silhouette the ability actually
- * makes.
+ * 第二个围绕"供你俯视的圆圈"来构建的徽记，因为它是第二个远程区域技能，
+ * 这是该槽位首先要表达的东西。雷网是在椭圆中央立一道闪电，这一个则是
+ * 把圆环本身立起来：五片高低不一的刃从边界上升起，中央尖塔最高——
+ * 这正是这个技能实际呈现出的轮廓。
  */
 const GLACIER = WRAP(`
   <ellipse cx="50" cy="74" rx="38" ry="13"/>
@@ -105,12 +100,12 @@ const GLACIER = WRAP(`
   <path d="M79 66L87 41L91 70"/>
 `);
 
-/** Keyed by the ids in `ELEMENTS`. */
+/** 以 `ELEMENTS` 中的 id 为键。 */
 export const ELEMENT_SIGILS = {
-  ice: ICE,
-  thunder: THUNDER,
-  meteor: METEOR,
-  beam: BEAM,
-  snare: SNARE,
-  glacier: GLACIER
+    ice: ICE,
+    thunder: THUNDER,
+    meteor: METEOR,
+    beam: BEAM,
+    snare: SNARE,
+    glacier: GLACIER,
 };

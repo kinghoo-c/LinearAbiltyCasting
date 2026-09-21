@@ -6,7 +6,7 @@ import { settings } from '../config/settings.js';
 import { getColor } from '../utils/color.js';
 
 /* ==================================================================== */
-/* The floor the crown stands on                                         */
+/* 王冠所站立的地面                                                       */
 /* ==================================================================== */
 
 const FIELD_VERTEX = /* glsl */ `
@@ -18,36 +18,32 @@ const FIELD_VERTEX = /* glsl */ `
 `;
 
 /**
- * The circle the indicator promised, **frozen** into the floor.
+ * 指示器承诺的那个圆，被**冻结**进了地面。
  *
- * Same signed-distance construction and the same thick boundary as the aim
- * circle and the Voltaic Snare's burnt field — that correspondence is the point:
- * what you measured out before you clicked is what is standing on the ground
- * afterwards. What it does not share is the treatment. Where the snare's field
- * is charred and veined, this one is a *sheet of ice*, and it is built from the
- * three things that actually read as frozen ground:
+ * 与瞄准圈、Voltaic Snare 的焦土场相同的符号距离构造、相同的粗边界——
+ * 这种对应关系正是重点所在：你点击之前量出的范围，就是之后立在地面上的
+ * 东西。它不与它们共享的是处理方式。捕兽夹的场是烧焦、布着脉络的，而
+ * 这一片是*一张冰壳*，由三样真正读作冻土的东西搭成：
  *
- *   - **plates.** A voronoi field whose *seams* are bright, because rime piles
- *     up thickest where two plates meet. The cell id also breaks the tone of
- *     each plate, so the sheet has facets rather than a wash.
- *   - **fingers.** Domain-warped ridged noise weighted to the radius: frost
- *     never advances as a circle, it reaches. Sampled in the *plane* and never
- *     on `atan()`, which would hand every radius along a bearing the same value
- *     and draw dead-straight spokes out of the middle.
- *   - **a front.** `uFreeze` is how far the ice has got, 0..1 of the boundary,
- *     with the same angular fingering dragging the edge out of round. It runs
- *     forward as the crown opens and *retreats* as it collapses, so the disc
- *     freezes outward and thaws inward instead of fading in place.
+ *   - **板块（plates）。** 一个 voronoi 场，它的*接缝*是亮的，因为霜在
+ *     两块板相接处堆积得最厚。单元 id 还打散了每块板的色调，于是冰壳
+ *     有刻面，而不是一片匀开的色。
+ *   - **手指（fingers）。** 域扭曲的脊状噪声，按半径加权：霜从不以圆的
+ *     形式推进，它是伸出去的。在*平面*上采样，绝不在 `atan()` 上采样——
+ *     后者会让同一方位上的每个半径拿到同一个值，并从中心画出死直的辐条。
+ *   - **一条锋面（front）。** `uFreeze` 表示冰推进到了多远，占边界的
+ *     0..1，同样带有把边缘拖离正圆的角向指状结构。王冠张开时它向前推进，
+ *     崩解时*回退*，于是圆盘向外冻结、向内消融，而不是原地淡出。
  *
- * It is an ability-owned mesh rather than a pooled decal for one reason: a decal
- * captures its radius when it spawns, and this circle has to re-scale under
- * `zoneRadius` while it is still standing.
+ * 它是一个由技能自己持有的网格，而不是一个池化的贴花，原因只有一个：
+ * 贴花在生成时就锁定了半径，而这个圆在仍然立着的时候必须随 `zoneRadius`
+ * 重新缩放。
  */
 const FIELD_FRAGMENT = /* glsl */ `
   uniform float uTime;
-  uniform float uQuadSize;    // metres the quad covers, edge to edge
-  uniform float uRadius;      // footprint radius, metres
-  uniform float uBoundary;    // thickness of the band that is the edge
+  uniform float uQuadSize;    // 四边形覆盖的米数，从一边到另一边
+  uniform float uRadius;      // 足迹半径，单位米
+  uniform float uBoundary;    // 作为边缘的那条带的厚度
   uniform float uBoundaryGlow;
   uniform float uFill;
   uniform float uFalloff;
@@ -66,7 +62,7 @@ const FIELD_FRAGMENT = /* glsl */ `
   uniform float uCoreSize;
   uniform float uPulse;
   uniform float uPulseSpeed;
-  uniform float uFreeze;      // 0..1 — how far the sheet has spread
+  uniform float uFreeze;      // 0..1 —— 冰壳已经铺开了多远
   uniform float uSeed;
   uniform float uFade;
   uniform float uOpacity;
@@ -82,7 +78,7 @@ const FIELD_FRAGMENT = /* glsl */ `
   #define TAU 6.28318530718
 
   void main() {
-    /* ---- uv → metres, measured from the centre of the footprint ---- */
+    /* ---- uv → 米，从足迹的中心量起 ---- */
     vec2 p = vec2(vUv.x - 0.5, 0.5 - vUv.y) * uQuadSize;
     float d = length(p);
 
@@ -92,9 +88,9 @@ const FIELD_FRAGMENT = /* glsl */ `
     float aa = fwidth(d) + 0.02;
     if (d > outer + aa * 4.0) discard;
 
-    /* ---- how far the ice has actually got ---- */
-    // The front is dragged out of round by an angular lookup — the one place an
-    // angular function is the right tool, because this *is* a boundary.
+    /* ---- 冰实际推进到了多远 ---- */
+    // 锋面被一次角向查询拖离正圆——这是角向函数唯一用对的地方，
+    // 因为这里*就是*一条边界。
     vec2  bearing = d > 1e-4 ? p / d : vec2(1.0, 0.0);
     float fingers = 0.78 + 0.3 * snoise(vec3(bearing * 3.1, uSeed * 6.0));
     float reach   = uFreeze * outer * fingers;
@@ -105,26 +101,26 @@ const FIELD_FRAGMENT = /* glsl */ `
     float interior = smoothstep(inner + aa, inner - aa, d);
     float radial = clamp(d / inner, 0.0, 1.0);
 
-    /* ---- the sheet: plates, and the rime piled in their seams ---- */
+    /* ---- 冰壳：板块，以及堆积在其接缝里的霜 ---- */
     vec2  cell  = voronoi2(p * uPlateScale + uSeed * 20.0);
     float seams = smoothstep(0.28, 0.02, cell.x) * uSeam;
     float plate = mix(0.55, 1.0, cell.y) * uPlates;
 
-    /* ---- frost fingers crawling over it ---- */
+    /* ---- 在它上面爬行的霜指 ---- */
     float warp = fbm3(vec3(p * 0.5, uTime * 0.12 + uSeed)) * uWarp;
     float fil  = ridged(vec3(p * uFingerScale + warp, uSeed * 11.0 + uTime * uCrawl), 4);
     float frost = smoothstep(0.66, 0.95, fil) * uFingers * (0.35 + 0.65 * radial);
 
-    /* ---- pressure rings, travelling inward toward the spire ---- */
+    /* ---- 压力环，向内朝尖塔行进 ---- */
     float ring = 0.5 + 0.5 * cos((radial * uRings + uTime * uRingSpeed) * TAU);
     ring = pow(ring, 8.0) * interior;
 
-    /* ---- a slow cold sweep, so a standing field is never quite still ---- */
+    /* ---- 一道缓慢的寒气扫掠，让立着的场永远不完全静止 ---- */
     float ang = atan(p.y, p.x) / TAU + 0.5;
     float sweepPhase = fract(ang - uTime * uSweepSpeed);
     float sweep = pow(1.0 - sweepPhase, 6.0) * smoothstep(0.0, 0.05, sweepPhase) * uSweep * interior;
 
-    /* ---- the pool the spire stands in ---- */
+    /* ---- 尖塔所立的那汪池水 ---- */
     float core = smoothstep(uCoreSize * uRadius, 0.0, d) * uCore;
 
     float breathe = 1.0 + uPulse * sin(uTime * uPulseSpeed * TAU);
@@ -136,7 +132,7 @@ const FIELD_FRAGMENT = /* glsl */ `
     if (alpha < 0.004) discard;
 
     vec3 color = uColorField * body + uColorEdge * lines;
-    // The advancing lip is still freezing, so it stays lit while it travels.
+    // 正在推进的唇边仍在冻结，所以它在行进途中始终发亮。
     color += uColorEdge * smoothstep(uBoundary * 1.2, 0.0, abs(d - reach)) * 0.9 *
              step(0.02, uFreeze) * step(uFreeze, 0.985);
 
@@ -145,102 +141,100 @@ const FIELD_FRAGMENT = /* glsl */ `
 `;
 
 /**
- * The sheet of ice on the floor. One quad, re-sized and re-shaded from
- * `settings.glacier` every frame.
+ * 地板上的这张冰壳。一个四边形，每帧依据 `settings.glacier` 重新调整
+ * 尺寸、重新着色。
  */
 export function createFrostFieldMaterial() {
-  const material = new ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    depthTest: true,
-    blending: AdditiveBlending,
-    side: DoubleSide,
-    toneMapped: false,
-    uniforms: sharedUniforms({
-      uQuadSize: { value: 12 },
-      uRadius: { value: 4.6 },
-      uBoundary: { value: 0.4 },
-      uBoundaryGlow: { value: 2.4 },
-      uFill: { value: 0.26 },
-      uFalloff: { value: 1.4 },
-      uPlates: { value: 1 },
-      uPlateScale: { value: 2.2 },
-      uSeam: { value: 0.8 },
-      uFingers: { value: 0.9 },
-      uFingerScale: { value: 1.6 },
-      uWarp: { value: 0.5 },
-      uCrawl: { value: 0.12 },
-      uRings: { value: 2.6 },
-      uRingSpeed: { value: -0.5 },
-      uSweep: { value: 0.4 },
-      uSweepSpeed: { value: 0.12 },
-      uCore: { value: 1 },
-      uCoreSize: { value: 0.2 },
-      uPulse: { value: 0.18 },
-      uPulseSpeed: { value: 1.6 },
-      uFreeze: { value: 0 },
-      uSeed: { value: 0 },
-      uFade: { value: 1 },
-      uOpacity: { value: 1 },
-      uColorField: { value: new Color(0.66, 0.9, 1) },
-      uColorEdge: { value: new Color(1, 1, 1) }
-    }),
-    vertexShader: FIELD_VERTEX,
-    fragmentShader: FIELD_FRAGMENT
-  });
+    const material = new ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: AdditiveBlending,
+        side: DoubleSide,
+        toneMapped: false,
+        uniforms: sharedUniforms({
+            uQuadSize: { value: 12 },
+            uRadius: { value: 4.6 },
+            uBoundary: { value: 0.4 },
+            uBoundaryGlow: { value: 2.4 },
+            uFill: { value: 0.26 },
+            uFalloff: { value: 1.4 },
+            uPlates: { value: 1 },
+            uPlateScale: { value: 2.2 },
+            uSeam: { value: 0.8 },
+            uFingers: { value: 0.9 },
+            uFingerScale: { value: 1.6 },
+            uWarp: { value: 0.5 },
+            uCrawl: { value: 0.12 },
+            uRings: { value: 2.6 },
+            uRingSpeed: { value: -0.5 },
+            uSweep: { value: 0.4 },
+            uSweepSpeed: { value: 0.12 },
+            uCore: { value: 1 },
+            uCoreSize: { value: 0.2 },
+            uPulse: { value: 0.18 },
+            uPulseSpeed: { value: 1.6 },
+            uFreeze: { value: 0 },
+            uSeed: { value: 0 },
+            uFade: { value: 1 },
+            uOpacity: { value: 1 },
+            uColorField: { value: new Color(0.66, 0.9, 1) },
+            uColorEdge: { value: new Color(1, 1, 1) },
+        }),
+        vertexShader: FIELD_VERTEX,
+        fragmentShader: FIELD_FRAGMENT,
+    });
 
-  /**
-   * @param {object} state { radius, quadSize, freeze, fade, seed }
-   */
-  material.userData.sync = (state) => {
-    const c = settings.glacier;
-    const g = settings.global;
-    const u = material.uniforms;
+    /**
+     * @param {object} state { radius, quadSize, freeze, fade, seed }
+     */
+    material.userData.sync = (state) => {
+        const c = settings.glacier;
+        const g = settings.global;
+        const u = material.uniforms;
 
-    u.uQuadSize.value = state.quadSize;
-    u.uRadius.value = state.radius;
-    u.uFreeze.value = state.freeze;
-    u.uFade.value = state.fade;
-    u.uSeed.value = state.seed;
+        u.uQuadSize.value = state.quadSize;
+        u.uRadius.value = state.radius;
+        u.uFreeze.value = state.freeze;
+        u.uFade.value = state.fade;
+        u.uSeed.value = state.seed;
 
-    u.uBoundary.value = c.fieldBoundary;
-    u.uBoundaryGlow.value = c.fieldBoundaryGlow;
-    u.uFill.value = c.fieldFill;
-    u.uFalloff.value = c.fieldFalloff;
-    u.uPlates.value = c.fieldPlates;
-    u.uPlateScale.value = c.fieldPlateScale * g.noiseFrequency;
-    u.uSeam.value = c.fieldSeam * g.shaderIntensity;
-    u.uFingers.value = c.fieldFingers * g.shaderIntensity;
-    u.uFingerScale.value = c.fieldFingerScale * g.noiseFrequency;
-    u.uWarp.value = c.fieldWarp * g.noiseStrength;
-    u.uCrawl.value = c.fieldCrawl * g.noiseSpeed;
-    u.uRings.value = c.fieldRings;
-    u.uRingSpeed.value = c.fieldRingSpeed;
-    u.uSweep.value = c.fieldSweep;
-    u.uSweepSpeed.value = c.fieldSweepSpeed;
-    u.uCore.value = c.fieldCore;
-    u.uCoreSize.value = c.fieldCoreSize;
-    u.uPulse.value = c.fieldPulse;
-    u.uPulseSpeed.value = c.fieldPulseSpeed;
-    u.uOpacity.value = c.fieldOpacity * g.opacity;
-    u.uColorField.value.copy(getColor(c.colorField));
-    u.uColorEdge.value.copy(getColor(c.colorFieldEdge));
-  };
+        u.uBoundary.value = c.fieldBoundary;
+        u.uBoundaryGlow.value = c.fieldBoundaryGlow;
+        u.uFill.value = c.fieldFill;
+        u.uFalloff.value = c.fieldFalloff;
+        u.uPlates.value = c.fieldPlates;
+        u.uPlateScale.value = c.fieldPlateScale * g.noiseFrequency;
+        u.uSeam.value = c.fieldSeam * g.shaderIntensity;
+        u.uFingers.value = c.fieldFingers * g.shaderIntensity;
+        u.uFingerScale.value = c.fieldFingerScale * g.noiseFrequency;
+        u.uWarp.value = c.fieldWarp * g.noiseStrength;
+        u.uCrawl.value = c.fieldCrawl * g.noiseSpeed;
+        u.uRings.value = c.fieldRings;
+        u.uRingSpeed.value = c.fieldRingSpeed;
+        u.uSweep.value = c.fieldSweep;
+        u.uSweepSpeed.value = c.fieldSweepSpeed;
+        u.uCore.value = c.fieldCore;
+        u.uCoreSize.value = c.fieldCoreSize;
+        u.uPulse.value = c.fieldPulse;
+        u.uPulseSpeed.value = c.fieldPulseSpeed;
+        u.uOpacity.value = c.fieldOpacity * g.opacity;
+        u.uColorField.value.copy(getColor(c.colorField));
+        u.uColorEdge.value.copy(getColor(c.colorFieldEdge));
+    };
 
-  return material;
+    return material;
 }
 
 /* ==================================================================== */
-/* The curtain of cold air standing on the ring                          */
+/* 立在环上的那幅冷气帘幕                                                 */
 /* ==================================================================== */
 
 /**
- * A cylinder in *parameter* space: `uv.x` runs once around the boundary and
- * `uv.y` from the floor to the top of the curtain, and the vertex stage flares
- * it outward with height and pushes the silhouette off round with the same noise
- * the fragment stage erodes it with. Without that displacement the veil is a
- * cylinder no matter how hard the fragment shader is worked, and it reads as a
- * fog machine rather than as air falling off a wall of ice.
+ * 一根处在*参数*空间里的圆柱：`uv.x` 绕边界走一圈，`uv.y` 从地面到帘幕
+ * 顶部；顶点阶段让它随高度向外张开，并用片元阶段侵蚀它所使用的那同一份
+ * 噪声，把剪影推离正圆。没有这层位移，无论片元着色器怎么使劲，这层纱都
+ * 是一根圆柱，读起来像一台造雾机，而不是从冰墙上泻下的空气。
  */
 const VEIL_VERTEX = /* glsl */ `
   uniform float uTime;
@@ -262,11 +256,11 @@ const VEIL_VERTEX = /* glsl */ `
     vec3 pos = position;
     vec2 outward = normalize(pos.xz + vec2(1e-5));
 
-    // Cold air spills *outward* as it falls off the rim, so the curtain leans
-    // out with height rather than standing straight up.
+    // 冷气从边沿跌落时是向*外*溢出的，所以帘幕随高度向外倾，
+    // 而不是笔直地立着。
     pos.xz *= 1.0 + uFlare * pow(clamp(uv.y, 0.0, 1.0), 1.6);
 
-    // Metre-scale lobes, so the silhouette bulges and pinches around the ring.
+    // 米级的叶瓣，于是剪影绕着环鼓起又收窄。
     float lobe = snoise(vec3(outward * uScale * 1.4, uTime * uFlow * 0.35 + uSeed));
     pos.xz += outward * lobe * uBillow * (0.25 + 0.75 * uv.y);
 
@@ -280,11 +274,9 @@ const VEIL_VERTEX = /* glsl */ `
 `;
 
 /**
- * The veil itself: ridged noise stretched hard vertically and scrolled *down*,
- * thresholded harder the higher it goes, so the curtain tears into separate
- * falls of vapour toward the top instead of ending on a line. Soft-faded against
- * the depth prepass, which is what lets it stand between the shards without
- * cutting into them.
+ * 纱幕本身：脊状噪声被沿垂直方向狠狠拉伸，并*向下*滚动，越往上阈值越硬，
+ * 于是帘幕朝顶部撕裂成一挂挂彼此分开的蒸汽，而不是终结于一条直线。
+ * 与深度预通道做软淡出——正是这一点让它能立在碎片之间而不切进它们。
  */
 const VEIL_FRAGMENT = /* glsl */ `
   uniform float uTime;
@@ -316,18 +308,17 @@ const VEIL_FRAGMENT = /* glsl */ `
   void main() {
     float up = clamp(vUv.y, 0.0, 1.0);
 
-    // Sampled in world space so the curtain does not swim when the ring is
-    // re-scaled, and squashed on Y so the structures are falls rather than
-    // clouds.
+    // 在世界空间采样，于是环被重新缩放时帘幕不会游移；并在 Y 上压扁，
+    // 让这些结构是一挂挂的落瀑而不是云团。
     vec3 sp = vec3(vWorld.xz * uScale, vWorld.y * uScale * uStretch + uTime * uFlow + uSeed * 7.0);
     float fil = ridged(sp, 4);
 
-    // Erode harder with height: the top of the curtain is mostly gaps.
+    // 越往上侵蚀越狠：帘幕顶部大半是空隙。
     float threshold = mix(0.52, 0.95, up * uErode);
     float veil = smoothstep(threshold, threshold + 0.22, fil);
 
-    // Weighted to the floor, and pinched off right at it so the curtain does not
-    // end in a hard line where it meets the ground.
+    // 朝地面加权，并在贴近地面处收断，让帘幕在与地面相接的地方
+    // 不会以一条硬线收尾。
     float profile = pow(1.0 - up, uFalloff) * smoothstep(0.0, 0.08, up);
 
     float alpha = veil * profile * uFade * uOpacity;
@@ -343,59 +334,59 @@ const VEIL_FRAGMENT = /* glsl */ `
 `;
 
 /**
- * The standing curtain of freezing vapour. One open cylinder seated on the
- * boundary, re-sized and re-shaded from `settings.glacier` every frame.
+ * 立着的那幅冻结蒸汽帘幕。一根架在边界上的开口圆柱，每帧依据
+ * `settings.glacier` 重新调整尺寸、重新着色。
  */
 export function createFrostVeilMaterial() {
-  const material = new ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    depthTest: true,
-    blending: AdditiveBlending,
-    side: DoubleSide,
-    toneMapped: false,
-    uniforms: sharedUniforms({
-      uFlare: { value: 0.35 },
-      uBillow: { value: 0.22 },
-      uScale: { value: 1.4 },
-      uStretch: { value: 0.55 },
-      uFlow: { value: 0.35 },
-      uErode: { value: 0.55 },
-      uFalloff: { value: 1.8 },
-      uSoftFade: { value: 0.8 },
-      uSeed: { value: 0 },
-      uFade: { value: 1 },
-      uOpacity: { value: 0.55 },
-      uColorVeil: { value: new Color(0.55, 0.82, 1) },
-      uColorCrest: { value: new Color(1, 1, 1) }
-    }),
-    vertexShader: VEIL_VERTEX,
-    fragmentShader: VEIL_FRAGMENT
-  });
+    const material = new ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: AdditiveBlending,
+        side: DoubleSide,
+        toneMapped: false,
+        uniforms: sharedUniforms({
+            uFlare: { value: 0.35 },
+            uBillow: { value: 0.22 },
+            uScale: { value: 1.4 },
+            uStretch: { value: 0.55 },
+            uFlow: { value: 0.35 },
+            uErode: { value: 0.55 },
+            uFalloff: { value: 1.8 },
+            uSoftFade: { value: 0.8 },
+            uSeed: { value: 0 },
+            uFade: { value: 1 },
+            uOpacity: { value: 0.55 },
+            uColorVeil: { value: new Color(0.55, 0.82, 1) },
+            uColorCrest: { value: new Color(1, 1, 1) },
+        }),
+        vertexShader: VEIL_VERTEX,
+        fragmentShader: VEIL_FRAGMENT,
+    });
 
-  /**
-   * @param {object} state { fade, seed }
-   */
-  material.userData.sync = (state) => {
-    const c = settings.glacier;
-    const g = settings.global;
-    const u = material.uniforms;
+    /**
+     * @param {object} state { fade, seed }
+     */
+    material.userData.sync = (state) => {
+        const c = settings.glacier;
+        const g = settings.global;
+        const u = material.uniforms;
 
-    u.uFade.value = state.fade;
-    u.uSeed.value = state.seed;
+        u.uFade.value = state.fade;
+        u.uSeed.value = state.seed;
 
-    u.uFlare.value = c.veilFlare;
-    u.uBillow.value = c.veilBillow * g.noiseStrength;
-    u.uScale.value = c.veilScale * g.noiseFrequency;
-    u.uStretch.value = c.veilStretch;
-    u.uFlow.value = c.veilFlow * g.noiseSpeed;
-    u.uErode.value = c.veilErode;
-    u.uFalloff.value = c.veilFalloff;
-    u.uSoftFade.value = c.veilSoftFade;
-    u.uOpacity.value = c.veil * g.opacity;
-    u.uColorVeil.value.copy(getColor(c.colorVeil));
-    u.uColorCrest.value.copy(getColor(c.colorVeilCrest));
-  };
+        u.uFlare.value = c.veilFlare;
+        u.uBillow.value = c.veilBillow * g.noiseStrength;
+        u.uScale.value = c.veilScale * g.noiseFrequency;
+        u.uStretch.value = c.veilStretch;
+        u.uFlow.value = c.veilFlow * g.noiseSpeed;
+        u.uErode.value = c.veilErode;
+        u.uFalloff.value = c.veilFalloff;
+        u.uSoftFade.value = c.veilSoftFade;
+        u.uOpacity.value = c.veil * g.opacity;
+        u.uColorVeil.value.copy(getColor(c.colorVeil));
+        u.uColorCrest.value.copy(getColor(c.colorVeilCrest));
+    };
 
-  return material;
+    return material;
 }

@@ -1,20 +1,20 @@
 /**
- * Applies the screen-space refraction buffer written by LAYER.DISTORTION.
+ * 应用由 LAYER.DISTORTION 写入的屏幕空间折射缓冲。
  *
- * The buffer holds an offset encoded around 0.5 in RG, a strength in B and a
- * coverage mask in A, so heat haze, water refraction and airbending pressure
- * waves all warp the frame through this single pass.
+ * 缓冲在 RG 通道保存以 0.5 为零点编码的偏移量，B 通道保存强度，
+ * A 通道保存覆盖遮罩，因此热浪、水面折射与御气术冲击波都经由
+ * 这一个 pass 扭曲画面。
  */
 export const DistortionShader = {
-  name: 'DistortionShader',
+    name: 'DistortionShader',
 
-  uniforms: {
-    tDiffuse: { value: null },
-    tDistortion: { value: null },
-    uScale: { value: 0.03 }
-  },
+    uniforms: {
+        tDiffuse: { value: null },
+        tDistortion: { value: null },
+        uScale: { value: 0.03 },
+    },
 
-  vertexShader: /* glsl */ `
+    vertexShader: /* glsl */ `
     varying vec2 vUv;
     void main() {
       vUv = uv;
@@ -22,7 +22,7 @@ export const DistortionShader = {
     }
   `,
 
-  fragmentShader: /* glsl */ `
+    fragmentShader: /* glsl */ `
     uniform sampler2D tDiffuse;
     uniform sampler2D tDistortion;
     uniform float uScale;
@@ -31,9 +31,9 @@ export const DistortionShader = {
     void main() {
       vec4 d = texture2D(tDistortion, vUv);
       vec2 offset = (d.rg - 0.5) * 2.0 * d.b * d.a * uScale;
-      // Clamp so a hot spot can never sample outside the frame.
+      // 钳制，保证热点永远不会采样到画面之外。
       vec2 uv = clamp(vUv + offset, vec2(0.0), vec2(1.0));
       gl_FragColor = texture2D(tDiffuse, uv);
     }
-  `
+  `,
 };

@@ -1,29 +1,29 @@
 /**
- * Final look pass (runs after tone mapping, in display space).
+ * 最终观感 pass（在色调映射之后运行，处于显示空间）。
  *
- * Combines the cheap-but-high-impact grading operations into one pass so the
- * frame is only resampled once: chromatic aberration, lift/gain/contrast/
- * saturation/temperature grading, vignette, film grain and the impact flash.
+ * 把廉价但高回报的几项调色操作合并到一个 pass 中，让画面只被重采样
+ * 一次：色差、lift/gain/对比度/饱和度/色温调色、暗角、胶片颗粒
+ * 以及命中闪光。
  */
 export const GradeShader = {
-  name: 'GradeShader',
+    name: 'GradeShader',
 
-  uniforms: {
-    tDiffuse: { value: null },
-    uTime: { value: 0 },
-    uAberration: { value: 0.35 },
-    uVignette: { value: 0.4 },
-    uContrast: { value: 1.05 },
-    uSaturation: { value: 1.1 },
-    uTemperature: { value: 0.05 },
-    uLift: { value: 0.0 },
-    uGain: { value: 1.0 },
-    uGrain: { value: 0.03 },
-    uFlashColor: { value: null },
-    uFlashStrength: { value: 0 }
-  },
+    uniforms: {
+        tDiffuse: { value: null },
+        uTime: { value: 0 },
+        uAberration: { value: 0.35 },
+        uVignette: { value: 0.4 },
+        uContrast: { value: 1.05 },
+        uSaturation: { value: 1.1 },
+        uTemperature: { value: 0.05 },
+        uLift: { value: 0.0 },
+        uGain: { value: 1.0 },
+        uGrain: { value: 0.03 },
+        uFlashColor: { value: null },
+        uFlashStrength: { value: 0 },
+    },
 
-  vertexShader: /* glsl */ `
+    vertexShader: /* glsl */ `
     varying vec2 vUv;
     void main() {
       vUv = uv;
@@ -31,7 +31,7 @@ export const GradeShader = {
     }
   `,
 
-  fragmentShader: /* glsl */ `
+    fragmentShader: /* glsl */ `
     uniform sampler2D tDiffuse;
     uniform float uTime;
     uniform float uAberration;
@@ -58,7 +58,7 @@ export const GradeShader = {
       vec2 centered = uv - 0.5;
       float r2 = dot(centered, centered);
 
-      // ---- chromatic aberration (radial, strongest at the corners) ------
+      // ---- 色差（径向，画面四角最强） ------
       vec3 color;
       if (uAberration > 0.001) {
         vec2 offset = centered * r2 * uAberration * 0.02;
@@ -69,28 +69,28 @@ export const GradeShader = {
         color = texture2D(tDiffuse, uv).rgb;
       }
 
-      // ---- grading -------------------------------------------------------
-      color = (color - 0.5) * uContrast + 0.5;          // contrast
-      color = color * uGain + uLift;                     // lift / gain
+      // ---- 调色 -------------------------------------------------------
+      color = (color - 0.5) * uContrast + 0.5;          // 对比度
+      color = color * uGain + uLift;                     // lift / gain（提升 / 增益）
 
       float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-      color = mix(vec3(luma), color, uSaturation);       // saturation
+      color = mix(vec3(luma), color, uSaturation);       // 饱和度
 
-      // Temperature: push warm into R/B, cool the other way.
+      // 色温：向 R/B 推暖色，反方向则变冷。
       color.r += uTemperature * 0.12;
       color.b -= uTemperature * 0.12;
 
-      // ---- vignette ------------------------------------------------------
-      // Falls off from the centre and reaches (1 - uVignette) in the corners,
-      // so the control maps directly onto "how much darker the corners are".
+      // ---- 暗角 ------------------------------------------------------
+      // 从中心向外衰减，在画面四角达到 (1 - uVignette)，
+      // 因此这个控制量直接对应“四角变暗多少”。
       color *= 1.0 - uVignette * smoothstep(0.15, 0.72, r2 * 1.9);
 
-      // ---- impact flash --------------------------------------------------
+      // ---- 命中闪光 --------------------------------------------------
       if (uFlashStrength > 0.001) {
         color = mix(color, uFlashColor, clamp(uFlashStrength, 0.0, 1.0) * 0.75);
       }
 
-      // ---- grain ---------------------------------------------------------
+      // ---- 颗粒 ---------------------------------------------------------
       if (uGrain > 0.0005) {
         float grain = hash12(uv * vec2(1920.0, 1080.0) + fract(uTime) * 137.0) - 0.5;
         color += grain * uGrain;
@@ -98,5 +98,5 @@ export const GradeShader = {
 
       gl_FragColor = vec4(max(color, 0.0), 1.0);
     }
-  `
+  `,
 };

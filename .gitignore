@@ -137,3 +137,6 @@ dist
 
 # Local VFX capture scratch (dev tooling)
 .captures/
+
+
+learning/

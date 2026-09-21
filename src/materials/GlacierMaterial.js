@@ -32,9 +32,8 @@ const GLACIER_VERTEX = /* glsl */ `
     vec4 world;
 
     #ifdef USE_INSTANCING
-      // A blade is scaled (radius, height, radius), which is anisotropic — the
-      // instance matrix would tip every normal toward the long axis. Dividing by
-      // the squared column lengths is the inverse-transpose three itself uses.
+      // 一片刃的缩放是（半径、高度、半径），这是各向异性的——实例矩阵会把
+      // 每个法线都推向长轴。除以列长的平方，正是 three 自己用的逆转置。
       mat3 im = mat3(instanceMatrix);
       vec3 invScale = vec3(dot(im[0], im[0]), dot(im[1], im[1]), dot(im[2], im[2]));
       objectNormal = im * (objectNormal / invScale);
@@ -54,47 +53,39 @@ const GLACIER_VERTEX = /* glsl */ `
 `;
 
 /**
- * Not ice you look *at* — ice you look *through*, lit from inside.
+ * 不是让你去*看*的冰，而是让你*透过*去看的冰，从内部被点亮。
  *
- * The Frost Lance's crystals are quarried stone: a patched standard material,
- * milky with feather frost and rime, tinted deeper the thicker the body gets. If
- * this ability borrowed that treatment it would read as the same spell twice, so
- * the Glacial Crown's blades are shaded from scratch and from the opposite end.
- * Almost nothing is diffuse. What you see is:
+ * Frost Lance 的水晶是采石场里的石头：一个打过补丁的标准材质，带着羽状霜
+ * 与白霜的乳白，晶体越厚色调越深。如果这个技能沿用那套处理，它就会读作
+ * 同一个法术演了两遍，所以 Glacial Crown 的刃片是从零着色，而且是从相反的
+ * 那一端着手的。几乎没有漫反射。你看到的是：
  *
- *   - **a dispersive edge.** The fresnel term is evaluated *three times*, at
- *     three slightly different exponents, and the results drive red, green and
- *     blue independently — so every silhouette carries a genuine chromatic
- *     fringe, cyan on one lip and violet on the other, the way a real prism
- *     splits a highlight. `dispersion` is how far the three come apart.
- *   - **light piped up the blade.** Emission gathers on the faces the axis runs
- *     *along* rather than the ones facing you, and climbs toward the point
- *     (`tipBias`) with a slow band travelling up it (`bands`, `pulseSpeed`),
- *     ending in an incandescent tip. That is what makes a blade read as a fibre
- *     of frozen light rather than as a lump.
- *   - **striations, not frost.** Ridged noise stretched hard along the blade's
- *     own axis, so the interior shows flow lines running its length instead of
- *     the Lance's milky clouding.
- *   - **a real reflection.** One equirect sample of the stage's HDR probe off
- *     the facet, plus a tight sun lobe, so the facets actually catch the room
- *     they are standing in.
+ *   - **一条色散边缘。** fresnel 项被求值*三次*，用三个略有差别的指数，
+ *     三个结果各自驱动红、绿、蓝——于是每一处剪影都带着真正的色边，一侧
+ *     唇边偏青、另一侧偏紫，就像真实棱镜把一道高光劈开那样。`dispersion`
+ *     就是三者分开了多远。
+ *   - **沿刃片向上输送的光。** 自发光聚集在轴与之*平行*的那些面上，而不是
+ *     正对你的面，并朝尖端攀升（`tipBias`），同时有一道缓慢的条带向上行进
+ *     （`bands`、`pulseSpeed`），最终收在白热的尖端。正是这一点让一片刃读作
+ *     一根冻结的光纤，而不是一坨东西。
+ *   - **纹层，不是霜。** 脊状噪声沿刃片自身的轴被狠狠拉伸，于是内部呈现的
+ *     是顺着长度流动的流线，而不是 Lance 那种乳白的云絮。
+ *   - **一次真实的反射。** 从刻面上取一次舞台 HDR 探针的 equirect 采样，
+ *     再加一个紧致的太阳瓣，于是刻面真的能映出它们立身其中的那间屋子。
  *
- * On top of that sit the ability's two signatures, the reason this is a material
- * and not a colour swap:
+ * 在此之上，是这个技能的两处签名——也正是它需要一个材质、而不是换个颜色的
+ * 原因：
  *
- *   - **the freeze front.** `aGrow` is a per-instance height, 0 at the floor and
- *     1 at the point, and everything above it is discarded against a noisy cut,
- *     so a blade *crystallises upward* out of the ground rather than sliding out
- *     of a hole. The travelling lip is lit (`frontGlow`).
- *   - **the shatter.** `aShatter` is a threshold against a per-fragment chunk id
- *     — half a voronoi cell in the blade's own space, half a hash of its flat
- *     face normal — so a dying blade loses whole plates and wedges one at a
- *     time, each break edge flaring as it goes.
+ *   - **冻结锋面。** `aGrow` 是逐实例的高度，地面处为 0、尖端为 1，高于它的
+ *     部分都会被一个带噪声的裁切丢弃，于是一片刃是*向上结晶*冒出地面的，
+ *     而不是从一个洞里滑出来。行进中的唇边是发亮的（`frontGlow`）。
+ *   - **崩碎。** `aShatter` 是一个与逐片元块 id 相比较的阈值——一半是刃片
+ *     自身空间里的 voronoi 单元，一半是其平面法线的哈希——于是一片将死的刃
+ *     会一块一块地掉下整块的板与楔，每一道断裂边缘在脱落时都会闪一下。
  *
- * Per-instance inputs arrive as instanced attributes (`aSeed`, `aBirth`,
- * `aGrow`, `aShatter`), which is why this material is only ever used on an
- * InstancedMesh. The geometry is non-indexed with per-face normals, so the
- * facets come out crisp without a `flatShading` flag to ask for it.
+ * 逐实例的输入以实例化 attribute 的形式到来（`aSeed`、`aBirth`、`aGrow`、
+ * `aShatter`），这就是这个材质只会用在 InstancedMesh 上的原因。几何体是
+ * 非索引的、带逐面法线，于是刻面自然是脆的，不需要 `flatShading` 标志去要。
  */
 const GLACIER_FRAGMENT = /* glsl */ `
   uniform float uTime;
@@ -157,26 +148,25 @@ const GLACIER_FRAGMENT = /* glsl */ `
   void main() {
     vec3 N = normalize(vNormalW);
     vec3 V = normalize(vView);
-    // Double-sided: the far wall of a blade is half of what you see through the
-    // near one, and its normal has to be flipped or it shades inside out.
+    // 双面：透过近侧那面看到的，有一半是刃片的远侧壁，它的法线必须翻转，
+    // 否则着色会里外颠倒。
     if (dot(N, V) < 0.0) N = -N;
 
     float ndv = clamp(dot(N, V), 0.0, 1.0);
     float h = clamp(vLocal.y, 0.0, 1.0);
 
-    /* ---- the freeze front: everything above it does not exist yet ---- */
-    // The roughness is added back on before the noise is taken off again, so a
-    // fully grown blade (aGrow = 1) can never cut into itself.
+    /* ---- 冻结锋面：它以上的东西都还不存在 ---- */
+    // 在扣掉噪声之前先把粗糙度加回去，于是一片完全长成的刃（aGrow = 1）
+    // 永远切不到自己。
     float ragged = snoise01(vLocal * 5.0 + vSeed * 7.0) * uFrontRough;
     float front  = vGrow * (1.0 + uFrontRough) - ragged;
     if (h > front) discard;
     float freezing = smoothstep(front - uFrontWidth, front, h) *
                      (1.0 - smoothstep(0.985, 1.0, vGrow));
 
-    /* ---- the shatter: plates and wedges leaving one at a time ---- */
-    // Two structures averaged. The voronoi half breaks the body into chunks that
-    // ignore the geometry; the facet half takes whole flat faces away, which is
-    // what actually happens to a crystal.
+    /* ---- 崩碎：板与楔一块一块地离开 ---- */
+    // 两种结构取平均。voronoi 那一半把身体打散成无视几何的块；刻面那一半
+    // 则整片整片地带走平面，而后者才是一块水晶真正会发生的事。
     float breaking = 0.0;
     if (vShatter > 0.001) {
       vec2 cell = voronoi2(vLocal.xz * uShatterScale + vLocal.y * 4.0 + vSeed * 13.0);
@@ -186,27 +176,26 @@ const GLACIER_FRAGMENT = /* glsl */ `
       breaking = smoothstep(vShatter + uShatterEdge, vShatter, chunk);
     }
 
-    /* ---- the dispersive edge ---- */
+    /* ---- 色散边缘 ---- */
     vec3 fres = pow(
       vec3(1.0 - ndv),
       vec3(uEdgePower * (1.0 - uDispersion * 0.4), uEdgePower, uEdgePower * (1.0 + uDispersion * 0.55))
     );
-    // Each facet takes its own place in the split, so neighbouring faces on one
-    // blade do not all fringe the same colour.
+    // 每个刻面在色散中有自己的位置，于是一片刃上相邻的面不会都镶同一个颜色。
     vec3 prism = mix(uColorPrismA, uColorPrismB, hash13(floor(N * 7.0) + vSeed * 5.0));
 
-    /* ---- light piped up the blade to the point ---- */
-    float along = 1.0 - abs(dot(N, vAxis)); // the long faces, not the caps
+    /* ---- 沿刃片输送到尖端的光 ---- */
+    float along = 1.0 - abs(dot(N, vAxis)); // 长条面，不是端盖
     float pipe = along * pow(h, uTipBias);
     float band = 0.5 + 0.5 * sin((h * uBands - uTime * uPulseSpeed) * TAU + vSeed * 5.0);
     pipe *= mix(0.6, 1.0, band * band);
     float tip = smoothstep(uTipStart, 1.0, h);
 
-    /* ---- flow lines running its length ---- */
+    /* ---- 顺着其长度流动的流线 ---- */
     float stria = ridged(vec3(vLocal.xz * uStriaScale, vLocal.y * uStriaScale * 0.3 + vSeed * 9.0), 4);
     stria = smoothstep(0.7, 0.97, stria) * along;
 
-    /* ---- the room it is standing in ---- */
+    /* ---- 它所处的那间屋子 ---- */
     vec3 refl = reflect(-V, N);
     vec3 env = texture2D(uEnvMap, equirectUv(refl)).rgb * uEnvIntensity;
     float sun = pow(max(dot(refl, -uSunDir), 0.0), 90.0) * uSpecular;
@@ -223,14 +212,13 @@ const GLACIER_FRAGMENT = /* glsl */ `
     color += uColorCore * vBirth * uBirthGlow;
     color *= uGlow;
 
-    // Soft ceiling. Every term peaks at a grazing angle and they stack; a
-    // Reinhard rolloff leaves anything under ~1 alone and asymptotes at 1/0.16 ≈
-    // 6, so the sliders keep biting at the top of their range without flattening
-    // the blade into a white cutout.
+    // 软上限。每一项都在掠射角处达到峰值，而它们会叠加；Reinhard 滚降对
+    // ~1 以下的值基本不动，并渐近于 1/0.16 ≈ 6，于是滑杆在量程顶端仍然
+    // 咬得住，又不会把刃片压平成一整块白色剪影。
     color /= 1.0 + color * 0.16;
 
-    // Glass: thin and clear through the body, solid at the silhouette, the tip
-    // and any edge that is currently freezing or breaking.
+    // 玻璃感：穿过身体处薄而通透，在剪影处、尖端以及任何正在冻结或崩碎的
+    // 边缘处则结实。
     float alpha = uBody * 0.4 + fres.g * 1.25 + pipe * 0.45 + stria * 0.3 +
                   tip * 0.55 + freezing + breaking;
     alpha = clamp(alpha, 0.0, 1.0) * uOpacity;
@@ -241,111 +229,110 @@ const GLACIER_FRAGMENT = /* glsl */ `
 `;
 
 /**
- * The blades of a Glacial Crown. One material for every shard in the cast; the
- * per-shard state rides in on instanced attributes.
+ * Glacial Crown 的刃片。整次施放中每一片碎晶共用一个材质；逐碎晶的状态
+ * 由实例化 attribute 带入。
  */
 export function createGlacierMaterial() {
-  const material = new ShaderMaterial({
-    transparent: true,
-    // Kept on: the crown is a wall you look into, and depth writes are what stop
-    // it sorting through itself and let the mist and snow fade against it.
-    depthWrite: true,
-    depthTest: true,
-    blending: NormalBlending,
-    side: DoubleSide,
-    toneMapped: false,
-    uniforms: {
-      uTime: frame.uTime,
-      uEnvMap: frame.uEnvMap,
-      uGlobalGlow: frame.uGlobalGlow,
-      uSunDir: { value: new Vector3(0, -1, 0) },
+    const material = new ShaderMaterial({
+        transparent: true,
+        // 保持开启：王冠是一堵你望进去的墙，而深度写入正是阻止它自我排序、
+        // 并让雾气与雪贴着它淡出的东西。
+        depthWrite: true,
+        depthTest: true,
+        blending: NormalBlending,
+        side: DoubleSide,
+        toneMapped: false,
+        uniforms: {
+            uTime: frame.uTime,
+            uEnvMap: frame.uEnvMap,
+            uGlobalGlow: frame.uGlobalGlow,
+            uSunDir: { value: new Vector3(0, -1, 0) },
 
-      uColorGlass: { value: new Color() },
-      uColorEdge: { value: new Color() },
-      uColorPrismA: { value: new Color() },
-      uColorPrismB: { value: new Color() },
-      uColorCore: { value: new Color() },
-      uColorTip: { value: new Color() },
+            uColorGlass: { value: new Color() },
+            uColorEdge: { value: new Color() },
+            uColorPrismA: { value: new Color() },
+            uColorPrismB: { value: new Color() },
+            uColorCore: { value: new Color() },
+            uColorTip: { value: new Color() },
 
-      uBody: { value: 0.55 },
-      uEdgePower: { value: 2.2 },
-      uEdgeGain: { value: 1.6 },
-      uDispersion: { value: 0.6 },
-      uPipe: { value: 1.5 },
-      uTipBias: { value: 1.6 },
-      uBands: { value: 1.4 },
-      uPulseSpeed: { value: 0.6 },
-      uTipStart: { value: 0.62 },
-      uTipGlow: { value: 1.4 },
-      uStria: { value: 0.7 },
-      uStriaScale: { value: 6.0 },
-      uEnvIntensity: { value: 0.6 },
-      uSpecular: { value: 2.0 },
-      uBirthGlow: { value: 2.2 },
+            uBody: { value: 0.55 },
+            uEdgePower: { value: 2.2 },
+            uEdgeGain: { value: 1.6 },
+            uDispersion: { value: 0.6 },
+            uPipe: { value: 1.5 },
+            uTipBias: { value: 1.6 },
+            uBands: { value: 1.4 },
+            uPulseSpeed: { value: 0.6 },
+            uTipStart: { value: 0.62 },
+            uTipGlow: { value: 1.4 },
+            uStria: { value: 0.7 },
+            uStriaScale: { value: 6.0 },
+            uEnvIntensity: { value: 0.6 },
+            uSpecular: { value: 2.0 },
+            uBirthGlow: { value: 2.2 },
 
-      uFrontRough: { value: 0.35 },
-      uFrontWidth: { value: 0.12 },
-      uFrontGlow: { value: 2.6 },
-      uShatterScale: { value: 7.0 },
-      uShatterEdge: { value: 0.08 },
-      uShatterGlow: { value: 3.0 },
+            uFrontRough: { value: 0.35 },
+            uFrontWidth: { value: 0.12 },
+            uFrontGlow: { value: 2.6 },
+            uShatterScale: { value: 7.0 },
+            uShatterEdge: { value: 0.08 },
+            uShatterGlow: { value: 3.0 },
 
-      uGlow: { value: 1.0 },
-      uOpacity: { value: 1.0 }
-    },
-    vertexShader: GLACIER_VERTEX,
-    fragmentShader: GLACIER_FRAGMENT
-  });
+            uGlow: { value: 1.0 },
+            uOpacity: { value: 1.0 },
+        },
+        vertexShader: GLACIER_VERTEX,
+        fragmentShader: GLACIER_FRAGMENT,
+    });
 
-  const u = material.uniforms;
+    const u = material.uniforms;
 
-  /** Pull the palette and every shading control from the live settings. */
-  material.userData.sync = () => {
-    const c = settings.glacier;
-    const g = settings.global;
-    const env = settings.environment;
+    /** 从实时 settings 中取出调色板与每一项着色控制。 */
+    material.userData.sync = () => {
+        const c = settings.glacier;
+        const g = settings.global;
+        const env = settings.environment;
 
-    u.uColorGlass.value.copy(getColor(c.colorGlass));
-    u.uColorEdge.value.copy(getColor(c.colorEdge));
-    u.uColorPrismA.value.copy(getColor(c.colorPrismA));
-    u.uColorPrismB.value.copy(getColor(c.colorPrismB));
-    u.uColorCore.value.copy(getColor(c.colorCore));
-    u.uColorTip.value.copy(getColor(c.colorTip));
+        u.uColorGlass.value.copy(getColor(c.colorGlass));
+        u.uColorEdge.value.copy(getColor(c.colorEdge));
+        u.uColorPrismA.value.copy(getColor(c.colorPrismA));
+        u.uColorPrismB.value.copy(getColor(c.colorPrismB));
+        u.uColorCore.value.copy(getColor(c.colorCore));
+        u.uColorTip.value.copy(getColor(c.colorTip));
 
-    u.uBody.value = c.body;
-    u.uEdgePower.value = c.edgePower;
-    u.uEdgeGain.value = c.edgeGain * g.fresnel;
-    u.uDispersion.value = c.dispersion;
-    u.uPipe.value = c.pipe * g.shaderIntensity;
-    u.uTipBias.value = c.tipBias;
-    u.uBands.value = c.bands;
-    u.uPulseSpeed.value = c.pulseSpeed * g.noiseSpeed;
-    u.uTipStart.value = c.tipStart;
-    u.uTipGlow.value = c.tipGlow;
-    u.uStria.value = c.stria * g.shaderIntensity;
-    u.uStriaScale.value = c.striaScale * g.noiseFrequency;
-    u.uEnvIntensity.value = c.envIntensity;
-    u.uSpecular.value = c.specular;
-    u.uBirthGlow.value = c.birthGlow;
+        u.uBody.value = c.body;
+        u.uEdgePower.value = c.edgePower;
+        u.uEdgeGain.value = c.edgeGain * g.fresnel;
+        u.uDispersion.value = c.dispersion;
+        u.uPipe.value = c.pipe * g.shaderIntensity;
+        u.uTipBias.value = c.tipBias;
+        u.uBands.value = c.bands;
+        u.uPulseSpeed.value = c.pulseSpeed * g.noiseSpeed;
+        u.uTipStart.value = c.tipStart;
+        u.uTipGlow.value = c.tipGlow;
+        u.uStria.value = c.stria * g.shaderIntensity;
+        u.uStriaScale.value = c.striaScale * g.noiseFrequency;
+        u.uEnvIntensity.value = c.envIntensity;
+        u.uSpecular.value = c.specular;
+        u.uBirthGlow.value = c.birthGlow;
 
-    u.uFrontRough.value = c.frontRough * g.noiseStrength;
-    u.uFrontWidth.value = c.frontWidth;
-    u.uFrontGlow.value = c.frontGlow;
-    u.uShatterScale.value = c.shatterScale * g.noiseFrequency;
-    u.uShatterEdge.value = c.shatterEdge;
-    u.uShatterGlow.value = c.shatterGlow;
+        u.uFrontRough.value = c.frontRough * g.noiseStrength;
+        u.uFrontWidth.value = c.frontWidth;
+        u.uFrontGlow.value = c.frontGlow;
+        u.uShatterScale.value = c.shatterScale * g.noiseFrequency;
+        u.uShatterEdge.value = c.shatterEdge;
+        u.uShatterGlow.value = c.shatterGlow;
 
-    u.uGlow.value = c.glow * g.glow;
-    u.uOpacity.value = c.opacity * g.opacity;
+        u.uGlow.value = c.glow * g.glow;
+        u.uOpacity.value = c.opacity * g.opacity;
 
-    // The sun the stage is actually lit by, so the glint sits where the rest of
-    // the scene's highlights do.
-    const cosE = Math.cos(env.sunElevation);
-    u.uSunDir.value
-      .set(-Math.cos(env.sunAzimuth) * cosE, -Math.sin(env.sunElevation), -Math.sin(env.sunAzimuth) * cosE)
-      .normalize();
-  };
+        // 舞台实际受照所依据的那颗太阳，于是这道反光和其他场景高光落在同一处。
+        const cosE = Math.cos(env.sunElevation);
+        u.uSunDir.value
+            .set(-Math.cos(env.sunAzimuth) * cosE, -Math.sin(env.sunElevation), -Math.sin(env.sunAzimuth) * cosE)
+            .normalize();
+    };
 
-  material.userData.sync();
-  return material;
+    material.userData.sync();
+    return material;
 }

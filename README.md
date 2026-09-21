@@ -1,57 +1,28 @@
-# Elemental Sandbox
+# Elemental Sandbox（元素沙盒）
 
-A skillshot VFX sandbox built with **Three.js**, **Vite** and hand-written **GLSL**.
+一个基于 **Three.js**、**Vite** 和手写 **GLSL** 构建的指向性技能（skillshot）特效沙盒。
 
-Five abilities and two ways to aim them. Four are **line casts**: press the key to arm, a
-League-of-Legends style arrow appears on the ground and swings with the mouse, click to fire. The
-fifth is a **far cast**: the arrow is replaced by a circle with a deliberately thick boundary that
-follows the cursor and answers the only question a ground-targeted AoE has to answer before you
-commit — how much space is this going to take.
+五个技能，两种瞄准方式。其中四个是**线性施法**：按下按键进入备战状态，地面上出现类似《英雄联盟》风格的箭头并随鼠标摆动，点击施放。第五个是**远程施法**：箭头被一个刻意加粗边界的圆圈取代，圆圈跟随光标，回答地面指向 AoE 在确认施放前唯一需要回答的问题——这块效果到底要占多大的地方。
 
-**Q — Frost Lance.** A fracture front races out along the line while a field of ice crystals
-tears up out of the floor behind it — small and dense at your feet, opening into a wall of blades
-at the far end, with a cluster thrown up around the impact point.
+**Q — 寒霜之枪（Frost Lance）。** 一道断裂前沿沿直线冲出，其后一片冰晶领域从地面撕裂而出——脚下小而密，远端张开成刃墙，冲击点周围还会掀起一簇冰晶。
 
-**E — Storm Lance.** A bolt leaves the caster's hand and a bundle of lightning filaments is drawn
-out behind the strike front, holds while it gutters and re-strikes, then blows out. Sparks come
-off it the whole way, the floor underneath takes a branching electric burn and a dark scorch, and
-the far end gets a shell of ionised air.
+**E — 风暴之枪（Storm Lance）。** 一道闪电从施法者手中射出，一束闪电丝缕被拉在冲击前沿之后，停留、摇曳并反复重击，然后熄灭。全程迸溅火花，正下方的地面留下分枝状的电击焦痕与暗色灼烧，远端包裹一层电离空气壳。
 
-**R — Cinder Fall.** A burning rock is lobbed downrange on an arc, trailing a raymarched wake of
-burning gas and heating up the whole way: the lava seams splitting its surface prise wider and
-brighter as it comes in. It detonates on arrival, throws its own shattered chunks across the floor, and tears the
-ground open into a network of molten cracks that keep glowing while the crater burns out.
+**R — 烬火陨落（Cinder Fall）。** 一块燃烧的岩石沿弧线抛向远处，拖着一道 raymarch（光线步进）的燃烧气体尾迹，全程持续升温：分裂岩面的熔岩缝隙随下落越张越宽、越烧越亮。落地即爆，碎块抛撒一地，并将地面撕裂成一张持续发光的熔岩裂缝网，随陨坑逐渐燃尽。
 
-**F — Nova Beam.** The caster winds a ball of light up in both hands, pulling motes in out of the
-air, then lets a column of it out along the line — white-hot core, cyan sheath, gold ribbons
-spiralling around it and shock discs racing down it. It *holds* there, burning into the floor and
-throwing spray back up the beam, before collapsing to a thread and blinking out. The only cast in
-the sandbox that is still happening a second after it landed.
+**F — 新星光束（Nova Beam）。** 施法者双手凝聚一颗光球，从空气中吸入光尘，随后沿直线释放一道光柱——白热核心、青色鞘层、金色缎带螺旋缠绕、冲击盘沿柱飞驰。它会**驻留**，烧蚀地面并把碎屑沿光束向上反抛，之后才收缩成一丝并熄灭。这是沙盒中唯一在命中一秒后仍在持续施放的技能。
 
-**V — Voltaic Snare.** The far cast. A leash of current is whipped out across the floor, and where
-it lands the ring snaps open past its own radius and pulls back onto it: a violet column tears up
-out of the middle, tendrils crawl outward to the boundary, arcs run around the rim and the whole
-disc burns. It holds there re-striking and hauling the air up into the pillar, then collapses to a
-thread. The circle you measured out before the click is exactly the circle you get.
+**V — 雷电之网（Voltaic Snare）。** 远程施法。一道电流链鞭甩过地面，落点处圆环弹开越过自身半径后回缩贴合：紫色光柱从中央撕裂而上，触须向边界爬行，弧光沿边缘环跑，整个圆盘熊熊燃烧。它驻留原地反复重击、将空气卷成柱状，随后收缩成一丝。你点击前量好的那个圆，就是实际得到的那个圆。
 
-Everything you can see is generated. There are no textures, no sprite sheets and no meshes on
-disk except the character: the crystals are procedural geometry, the bolt is a strip of ribbon
-placed entirely by a vertex shader, the meteor is an icosphere cratered and sliced by fracture
-planes on the CPU, the beam is a parametric tube drawn three times at three radii, the snare's
-whole cage is that same ribbon strip threaded along four different parametric paths, the arrow, the
-targeting circle, the rime, the burns and the molten cracks are signed-distance and noise shaders,
-and the mist, sparks, chips and glitter are GPU particles.
+你看到的一切都是生成的。没有贴图、没有精灵表，磁盘上除了角色没有任何网格：水晶是程序化几何体，闪电是一条完全由顶点着色器布设的条带，陨石是由 CPU 以断裂面切割多面体而成的凹坑球，光束是以三种半径绘制三次的参数化管道，雷网的整个笼体是同一条条带沿四条不同参数路径穿行而成，箭头、瞄准圈、霜痕、灼烧与熔岩裂缝都是 SDF 与噪声着色器，雾气、火花、碎屑与闪粉都是 GPU 粒子。
 
-**Every parameter is a live slider** — 938 of them — and they stay live while the simulation is
-paused. That is the point of the project: freeze a frame mid-eruption, mid-strike or mid-burn with
-**P**, then reshape the silhouette, the palette and the timing against a still image.
+**每一个参数都是一个实时滑杆**——共 938 个——并且在模拟暂停时依然生效。这就是本项目的意义所在：用 **P** 将画面冻结在喷发、重击或燃烧的中途，然后对着一张静帧重塑轮廓、配色与节奏。
 
-References for the look: `icecast.jpg`, `thundercast.jpg`, `superbeam.jpg` and
-`electricalboost.jpg`.
+视觉参考：`icecast.jpg`、`thundercast.jpg`、`superbeam.jpg` 与 `electricalboost.jpg`。
 
 ---
 
-## Quick start
+## 快速开始
 
 ```bash
 npm install
@@ -61,7 +32,7 @@ npm install
 npm run dev
 ```
 
-Then open the URL Vite prints (default <http://127.0.0.1:5173>).
+然后打开 Vite 打印的 URL（默认 <http://127.0.0.1:5173>）。
 
 ```bash
 npm run build
@@ -71,519 +42,291 @@ npm run build
 npm run preview
 ```
 
-### Assets
+### 资产
 
-Six binary assets are served from `public/` and loaded automatically at boot:
+六个二进制资产由 `public/` 目录提供，并在启动时自动加载：
 
-| File | Purpose |
-| --- | --- |
-| `public/models/Idle.fbx` | Rigged character **and** its idle animation clip |
-| `public/models/diffuse.png` | The character's colour map |
-| `public/models/cast1.fbx` | Cast animation |
-| `public/models/cast2.fbx` | Cast animation |
-| `public/models/cast3.fbx` | Cast animation — the default for Frost Lance, Root Snare and Glacier Crown |
-| `public/hdri/spruit_sunrise.hdr` | HDR probe used for image-based lighting and crystal reflections |
+| 文件                             | 用途                                             |
+| -------------------------------- | ------------------------------------------------ |
+| `public/models/Idle.fbx`         | 带骨骼的角色**以及**它的待机动画片段             |
+| `public/models/diffuse.png`      | 角色的颜色贴图                                   |
+| `public/models/cast1.fbx`        | 施法动画                                         |
+| `public/models/cast2.fbx`        | 施法动画                                         |
+| `public/models/cast3.fbx`        | 施法动画——寒霜之枪、根系陷阱与冰川之冠的默认动画 |
+| `public/hdri/spruit_sunrise.hdr` | 用于基于图像的照明与水晶反射的 HDR 探针          |
 
-All four FBX files are Mixamo exports of the same rig, each carrying a skinned mesh plus one
-animation stack. The character comes from the idle file; the cast files are loaded for their clip
-alone, and the duplicate rig that arrives with each one is released the moment its `AnimationClip`
-has been taken. Clips bind to the skeleton by bone name, which is the whole reason an animation
-authored in another file plays here without retargeting.
+四个 FBX 文件都是同一副骨架的 Mixamo 导出，每个都带有一个蒙皮网格加一个动画栈。角色取自待机动画文件；其余施法文件仅为取其动画片段而加载，随每个文件多出来的那副重复骨架在取走 `AnimationClip` 的那一刻就被释放。片段按骨骼名绑定到骨架上——这正是为其他文件制作的动画无需重定向就能在这里播放的原因。
 
-The rig ships no material, so `diffuse.png` is loaded beside it and assigned as the colour map when
-the imported materials are converted to PBR — an FBX that *does* carry an embedded texture keeps its
-own, since that map is authored against its own UVs.
+这副骨架不带材质，因此 `diffuse.png` 与它一起加载，并在导入材质被转换为 PBR 时指定为颜色贴图——若某个 FBX 自带内嵌贴图则保留其自有贴图，因为那张贴图是照着它自己的 UV 制作的。
 
-Every ability picks the clip it throws — `castAnim` in its settings block, a dropdown under **The
-cast** in its editor folder. Out of the box slots 1, 5 and 6 — Frost Lance, Root Snare and Glacier
-Crown — throw `cast3`, and the other three throw `cast1`. The clip is a one-shot laid over
-the looping idle, with `character.castBlendIn` / `castBlendOut` as the two edges of that overlap.
-
-The HDR is loaded as image-based lighting and as the reflection source for the ice — it is never
-shown as a visible sky. The stage keeps its flat dark backdrop.
+HDR 被加载为基于图像的照明以及冰面的反射来源——它从不作为可见天空显示。舞台保持平坦的深色背景。
 
 ---
 
-## Controls
+## 操作方式
 
-| Input | Action |
-| --- | --- |
-| **Q** (or **1**) | Arm Frost Lance — press again to put it away |
-| **E** (or **2**) | Arm Storm Lance — press again to put it away |
-| **R** (or **3**) | Arm Cinder Fall — press again to put it away |
-| **F** (or **4**) | Arm Nova Beam — press again to put it away |
-| **V** (or **5**) | Arm Voltaic Snare — the far cast, aimed with a circle |
-| **Move the mouse** | Swing the aim arrow, or move the far-cast circle |
-| **Left click** | Cast along the arrow, or drop the circle where it is |
-| **Esc** / **right click** | Cancel an armed cast |
-| **Right mouse + drag** | Orbit the camera |
-| **Scroll** | Zoom |
-| **G** | Show/hide the VFX editor |
-| **P** | Pause / resume — *the editor keeps applying* |
-| **C** | Clear all active effects |
-| **H** | Hide the controls panel |
+| 输入               | 动作                               |
+| ------------------ | ---------------------------------- |
+| **Q**（或 **1**）  | 备战寒霜之枪——再按一次收起         |
+| **E**（或 **2**）  | 备战风暴之枪——再按一次收起         |
+| **R**（或 **3**）  | 备战烬火陨落——再按一次收起         |
+| **F**（或 **4**）  | 备战新星光束——再按一次收起         |
+| **V**（或 **5**）  | 备战雷电之网——远程施法，用圆圈瞄准 |
+| **移动鼠标**       | 摆动瞄准箭头，或移动远程施法圆圈   |
+| **左键点击**       | 沿箭头施放，或将圆圈落在当前位置   |
+| **Esc** / **右键** | 取消已备战的施法                   |
+| **右键 + 拖动**    | 环绕旋转相机                       |
+| **滚动**           | 缩放                               |
+| **G**              | 显示/隐藏 VFX 编辑器               |
+| **P**              | 暂停/恢复——_编辑器仍然生效_        |
+| **C**              | 清除所有激活的特效                 |
+| **H**              | 隐藏操作面板                       |
 
-`range` and `minRange` are per ability, so the indicator's reach changes with the slot you have
-selected. Aiming closer than the selected ability's `minRange` tints it red and refuses the cast;
-set `minRange` to 0 if you would rather cast at your own feet, which is what the Snare ships with —
-a trap you cannot drop on yourself is missing half its uses. Cooldowns are per ability too, so
-spending one slot never locks the other out.
+`range` 与 `minRange` 是逐技能设置的，因此指示器的射程随所选槽位变化。瞄准距离小于所选技能的 `minRange` 时会变红并拒绝施放；若想在自己脚下施法，把 `minRange` 设为 0 即可——雷网出厂即是如此，一个不能丢在自己脚上的陷阱等于废了一半用途。冷却同样逐技能独立，因此消耗一个槽位绝不会锁定其他槽位。
 
 ---
 
-## Project layout
+## 项目结构
 
 ```
 src/
-  abilities/      Ability base class (the travelling front), IceAbility, ThunderAbility,
-                  MeteorAbility, BeamAbility, SnareAbility, pooling manager
-  animation/      FBX character loading, AnimationMixer, the per-ability cast clips,
-                  the procedural cast lunge
-  assets/         Procedural crystal and asteroid geometry, the bolt ribbon strip,
-                  the beam tube and its shock discs
-  config/         settings.js — the single source of truth for every parameter
-  core/           App, Renderer, CameraRig, Time, Layers, shared frame uniforms
-  effects/        Aim arrow, far-cast circle, ground decals, fissures, bursts,
-                  light pool, shake, flash
-  input/          InputManager (events) and AimController (both targeting shapes)
-  loaders/        AssetLoader with a shared LoadingManager
-  materials/      IceMaterial, LightningMaterial, MeteorMaterial,
-                  VolumetricFireMaterial, BeamMaterial, SnareMaterial
-  particles/      GPU particle system + engine and rate emitters
-  postprocessing/ Composer pipeline, grade shader, distortion shader
-  shaders/lib/    Shared GLSL: noise library, common helpers
-  ui/             HUD, lil-gui editor, preset manager, styles
-  utils/          Maths, colour cache, pooling, disposal, shader patching
-  world/          Environment (stage lighting), floor, dust, contact shadows
-  archive/        The retired four-element sandbox — see archive/README.md
+  abilities/      技能基类（行进的前沿）、IceAbility、ThunderAbility、
+                  MeteorAbility、BeamAbility、SnareAbility、对象池管理器
+  animation/      FBX 角色加载、AnimationMixer、逐技能施法片段、
+                  程序化施法前扑
+  assets/         程序化水晶与小行星几何体、闪电条带、
+                  光束管道及其冲击盘
+  config/         settings.js —— 每一个参数的唯一数据源
+  core/           App、Renderer、CameraRig、Time、Layers、共享帧 uniform
+  effects/        瞄准箭头、远程施法圆圈、地面贴花、地裂、爆裂球、
+                  灯光池、震屏、闪白
+  input/          InputManager（事件）与 AimController（两种瞄准形状）
+  loaders/        带共享 LoadingManager 的 AssetLoader
+  materials/      IceMaterial、LightningMaterial、MeteorMaterial、
+                  VolumetricFireMaterial、BeamMaterial、SnareMaterial
+  particles/      GPU 粒子系统 + 引擎与速率发射器
+  postprocessing/ Composer 管线、校色着色器、扰动着色器
+  shaders/lib/    共享 GLSL：噪声库、公共 helper
+  ui/             HUD、lil-gui 编辑器、预设管理器、样式
+  utils/          数学、颜色缓存、对象池、资源释放、着色器补丁
+  world/          Environment（舞台灯光）、地板、浮尘、接触阴影
+  archive/        已退役的四元素沙盒 —— 见 archive/README.md
 ```
 
 ---
 
-## How it fits together
+## 各系统如何协同
 
-### Settings are the API
+### 设置就是 API
 
-`src/config/settings.js` holds every tweakable value. Nothing else owns that state: shaders,
-particle systems, lights and post passes *read* those objects every frame. That is what makes the
-editor work with no rebuild — moving a slider changes the ice field that is already standing, the
-next cast, the environment and the post stack at once. Preset loading deep-merges *into* the same
-objects so every live binding stays valid.
+`src/config/settings.js` 保存每一个可调值。没有其他任何地方拥有这份状态：着色器、粒子系统、灯光与后处理 pass 每一帧都**读取**这些对象。这正是编辑器无需重建即可工作的原因——拖动一个滑杆，会同时改变已经站立的冰晶场、下一次施法、环境与后处理栈。预设加载会 deep-merge 进同一批对象，因此所有实时绑定保持有效。
 
 ```js
 import { settings } from './config/settings.js';
-settings.ice.height = 7;          // visible on the next frame, even mid-cast
-settings.thunder.jitter = 1.2;    // re-kinks a bolt that is already in the air
-settings.global.timeScale = 0.1;  // slow the whole cast to a crawl
+settings.ice.height = 7; // 下一帧即生效，即使施法中途
+settings.thunder.jitter = 1.2; // 重新扭结一道已在空中的闪电
+settings.global.timeScale = 0.1; // 将整个施法放慢到爬行
 ```
 
-Ability blocks are keyed by their id in `ELEMENTS`, and the shared systems that need to know
-"which ability is the player holding" — the aim controller, the cooldowns, the HUD — look it up as
-`settings[element]`. The four fields they rely on being present are `range`, `minRange`, `speed`
-and `cooldown`; a far cast adds a fifth, `zoneRadius`. Everything else in a block is that ability's
-own business.
+技能块以其 id 为键存于 `ELEMENTS` 中，需要知道"玩家正握着哪个技能"的共享系统——瞄准控制器、冷却、HUD——以 `settings[element]` 查找。它们依赖的字段有四个：`range`、`minRange`、`speed`、`cooldown`；远程施法多第五个：`zoneRadius`。块中的其他内容都是该技能自己的私事。
 
-### The rule that makes "edit while paused" work
+### 让"暂停中编辑"成立的规则
 
-A spike record in `IceAbility` stores **only what the dice decided**: a position *fraction* along
-the line, a signed lateral *fraction*, and a handful of unitless jitters. Not one metre, radian or
-second is captured when the cast starts. Every dimension is resolved against `settings.ice` inside
-the update loop, which runs on a zero-length frame too.
+`IceAbility` 中的一条 spike（冰刺）记录**只存储骰子决定的东西**：沿线的位置*分数*、带符号的侧向*分数*，以及若干无量纲抖动。施法开始时不会记录任何一米、一弧度或一秒。每个维度都在 update 循环中对照 `settings.ice` 解析，而这个循环即使在一帧零时长时也会运行。
 
-So dragging `height` re-grows a field that is already standing; dragging `lean` re-tilts it;
-dragging `clumping` re-packs it toward the centre line. The only values a record *does* capture
-are timestamps — the moment its own eruption was triggered. Those are events, not dimensions.
+所以拖动 `height` 会重新生长一片已经站立的场；拖动 `lean` 会重新倾斜它；拖动 `clumping` 会把它向中线重新聚拢。一条记录*确实*会捕获的值只有时间戳——它自己喷发被触发的那一刻。那些是事件，不是尺寸。
 
-The four *shape* controls (`facets`, `taper`, `roughness`, `bend`) cannot be expressed as a
-per-instance transform, so they are baked into the geometry instead — and a six-sided crystal is
-just 60 triangles, cheap enough to regenerate outright rather than approximate in a vertex shader.
-`IceAbility#_syncGeometry` hashes those four values and rebuilds the three crystal meshes when the
-hash changes, which is what keeps them live sliders rather than restart-required constants.
+四个*形状*控制（`facets`、`taper`、`roughness`、`bend`）无法表示为逐实例变换，因此它们被烘焙进几何体——而一根六棱水晶不过 60 个三角形，直接整体重建足够便宜，无需在顶点着色器里近似。`IceAbility#_syncGeometry` 将这四个值做哈希，哈希变化时重建三个水晶网格——这正是它们是实时滑杆而非"需重启的常量"的原因。
 
-### Aiming
+### 瞄准
 
-`AimController` raycasts the pointer onto the ground plane **every frame**, not only on mouse
-move, so orbiting the camera with a cast armed swings the indicator under a stationary cursor. It
-clamps the distance into `[minRange, range]`, tracks a 0..1 reveal envelope, and emits a single
-`cast` event carrying an origin, a unit direction and a distance — which is exactly the signature
-`Ability#spawn` takes. It decides nothing about what the cast does.
+`AimController` **每一帧**都把指针射线投射到地面平面上，而不只在鼠标移动时，因此已备战时环绕相机会让指示器在静止光标下摆动。它将距离钳制进 `[minRange, range]`，跟踪 0..1 的显现包络，并发出一个携带原点、单位方向与距离的 `cast` 事件——这恰好就是 `Ability#spawn` 的函数签名。它不对施放结果做任何决定。
 
-It runs on **real** time rather than the scaled simulation delta, so the indicator keeps animating
-while the sandbox is paused.
+它运行在**真实**时间而非缩放后的模拟 delta 上，因此沙盒暂停时指示器仍在动画。
 
-There are two indicators and one controller. Which one is drawn comes from
-`ELEMENT_META[element].cast` — `CastShape.LINE` or `CastShape.ZONE` — and that is the *only* thing
-the two shapes disagree about. Arming, clamping, validating, revealing and firing are shared, and
-both end in the same three-argument `cast` event, because from the targeting side a far cast is a
-line cast you only care about the far end of. That is why zone targeting needed no change in
-`Ability`, `AbilityManager` or `App`: `SnareAbility` reads its centre as `pointAt(1)` and works
-outward from there.
+共有两个指示器和一个控制器。画哪一个由 `ELEMENT_META[element].cast` 决定——`CastShape.LINE` 或 `CastShape.ZONE`——这是两个形状唯一分歧的地方。备战、钳制、校验、显现与发射都是共享的，且都以同一个三参数的 `cast` 事件结束，因为从瞄准侧看，远程施法就是一条你只关心其远端的线性施法。这正是区域瞄准无需改动 `Ability`、`AbilityManager` 或 `App` 的原因：`SnareAbility` 把它的中心读作 `pointAt(1)`，然后从那里向外展开。
 
-### The far-cast circle
+### 远程施法圆圈
 
-`ZoneIndicator` is the arrow's opposite number, and it is built out of the same two ideas: metres,
-and no textures.
+`ZoneIndicator` 是箭头的对偶物，它由同样的两个理念构成：米，以及无贴图。
 
-The **footprint** is one quad whose fragment shader remaps UV into metres from the target, so the
-boundary stays 0.34 m thick whether the circle is 2 m or 8 m across. The band is deliberately the
-heaviest mark on screen — it is the whole message — and it is split about the nominal radius by
-`boundaryBias` rather than centred on it, so its *outer* lip stays honest about where the effect
-ends. Inside there is a rim-weighted wash, contour rings travelling outward, warped filaments and a
-reticle whose downrange arm is longer, because the quad carries the caster's yaw and that arm is
-therefore the heading.
+**footprint（落点足迹）**是一张四边形，其片元着色器将 UV 重映射为以目标点为原点的米制坐标，因此无论圆圈是 2 米还是 8 米跨，边界始终保持 0.34 米厚。色带刻意做成屏幕上最重的标记——它就是全部信息——并由 `boundaryBias` 分割在名义半径两侧而非居中对齐，因此其*外*唇始终诚实地标示效果结束的位置。内部有边缘加权的洗色、向外传播的等高环、扭曲的丝缕，以及一个下侧臂更长的十字准星——因为这张四边形携带着施法者的 yaw，那根臂因此就是朝向。
 
-The **reach ring** at the caster is the bolt's ribbon strip bent into a circle: `(t, side)` in,
-world position out. A quad big enough to hold a 20 m range would be 40 m across and shade a
-screenful of discarded fragments for one thin line.
+施法者脚下的**触及环（reach ring）**是把闪电的条带弯成一个圆：输入 `(t, side)`，输出世界坐标。一张足以容纳 20 米射程的四边形将有 40 米宽，并为一条细线着色满屏被丢弃的片元。
 
-The circle **snaps out past its radius and settles back** when the cast is armed, and the trap does
-the same thing when it lands. A circle that grows linearly reads as a UI element; one that
-overshoots reads as something the caster did.
+圆圈在施法备战时会**弹开越过自身半径再回缩就位**，陷阱落地时也会做同样的事。线性长大的圆圈读起来像 UI 元素；会过冲的圆圈读起来像施法者做了某件事。
 
-### The arrow is one SDF
+### 箭头是一个 SDF
 
-`AimIndicator` is a single ground quad. Its fragment shader remaps UV into **metres measured from
-the caster**, so every control in `settings.aim` is a real measurement — the shaft stays 0.42 m
-wide whether the cast is 3 m or 15 m long.
+`AimIndicator` 是一张地面四边形。它的片元着色器将 UV 重映射为**从施法者量起的米制坐标**，因此 `settings.aim` 中的每个控制量都是真实尺寸——无论施放距离是 3 米还是 15 米，箭杆始终保持 0.42 米宽。
 
-The silhouette is a rounded union of a box (the shaft) and iq's exact triangle SDF (the head);
-the cheap half-plane intersection leaves visible corner artefacts on a wedge this shallow. From
-that one distance field the shader derives the outline, the rim-weighted interior wash, the
-chevrons (a phase skewed by `|x|`, which turns flat bands into arrowheads pointing the way the
-cast does), the frost noise and voronoi plates, the ring at the caster's feet, the range cap arc,
-a six-fold frost rosette pinned to the impact point, and the sweep-out when the ability is armed.
+轮廓是一个圆角盒（箭杆）与 iq 的精确三角形 SDF（箭头）的并集；廉价的一半平面相交会在如此浅的楔形上留下可见的角部伪影。从这同一个距离场中，着色器推导出轮廓线、边缘加权内部洗色、V 形箭标（相位由 `|x|` 偏斜，把平带变成指向施放方向的箭头）、霜冻噪声与 voronoi 冰板、施法者脚下的圆环、射程封顶弧、钉在冲击点上的六瓣霜花，以及技能备战时的扫出效果。
 
-### The ice
+### 冰
 
-`materials/IceMaterial.js` patches a `MeshStandardMaterial` rather than replacing it, so the
-crystals cast and receive the stage's real shadows and pick up the HDR probe. The stylisation is
-injected on top:
+`materials/IceMaterial.js` 采用补丁方式修改 `MeshStandardMaterial` 而非替换它，因此水晶能投射并接受舞台的真实阴影，并拾取 HDR 探针。风格化效果注入在其上：
 
-- **Thickness tint** — a facet seen head-on has the longest path through the crystal, so it
-  darkens toward `colorDeep`; grazing edges stay pale. This is the term that makes the field read
-  as a solid you can see *into* rather than as blue plastic.
-- **Internal fracture** — ridged noise sampled in **world** space, so the crack planes stay a fixed
-  physical size whether a spike is ankle-high or three metres tall, and neighbouring crystals look
-  quarried from the same block.
-- **Feather frost and rime** — fbm sampled in **local** space (0..1 up the crystal), so the milky
-  veining and the frost creeping up from the base follow each spike's own axis however it is
-  scaled or leaned.
-- **Glint** — a hard-thresholded high-frequency field scrolling in world space, biased toward
-  grazing angles, which is where real ice catches.
-- **Birth flash** — a per-instance attribute the ability drives from 1 to 0 over `birthFade`, so a
-  crystal is lit from within for the moment it erupts.
+- **厚度着色**——一个正面朝向的晶面在水晶内部有最长的光路，因此向 `colorDeep` 变暗；掠射边缘保持浅色。正是这一项让冰场读起来像你能*看进去*的实体，而不是蓝色塑料。
+- **内部断裂**——在**世界**空间采样的脊状噪声，因此无论一根冰刺是脚踝高还是三米高，裂纹平面都保持固定的物理尺寸，相邻水晶看起来像从同一块料上凿出来的。
+- **羽状霜与雾凇**——在**局部**空间（0..1 沿水晶向上）采样的 fbm，因此乳白色脉纹与从底部向上爬的霜冻沿着每根冰刺自身的轴向生长，无论它被如何缩放或倾斜。
+- **闪点（Glint）**——一个硬阈值的高频场在世界空间中滚动，并偏向掠射角——真实的冰正是在那里闪光的。
+- **出生闪光**——一个逐实例属性，由技能在 `birthFade` 时间内从 1 驱动到 0，使水晶在喷发的那一刻由内而外发光。
 
-Three `InstancedMesh`es share one material. Three rather than one because the *facets* differ, not
-just the proportions — per-instance scaling alone cannot buy that silhouette variety, and three
-draw calls is a cheap price.
+三个 `InstancedMesh` 共享同一个材质。之所以是三个而不是一个，是因为*棱面数*不同，不只是比例不同——逐实例缩放 alone 买不到那种轮廓变化，而三次 draw call 是便宜的代价。
 
-### The lightning
+### 闪电
 
-`ThunderAbility` takes the "no dimensions on the CPU" rule further than the ice does: there is no
-path object at all. The bolt is one `InstancedBufferGeometry` — a flat ladder of quads in
-*parameter* space, where each vertex carries only `(t, side)`: how far along the bolt it is, and
-which edge of the ribbon it is on. One instance is one filament. `materials/LightningMaterial.js`
-turns that pair into a world position every frame, so a single strip serves a bolt of any length,
-any shape and any width.
+`ThunderAbility` 把"CPU 上不存尺寸"的规则推得比冰更远：根本不存在路径对象。闪电是一条 `InstancedBufferGeometry`——参数空间中的扁平梯状四边形，每个顶点只携带 `(t, side)`：它沿闪电走多远，以及它在条带哪一侧。一条实例就是一条丝缕。`materials/LightningMaterial.js` 每帧把这一对参数变成世界坐标，因此一条条带可服务于任意长度、任意形状、任意宽度的闪电。
 
-Three things stack to make the shape:
+三件事叠加出形状：
 
-- **the axis** — a straight line from the hand to the impact point, bowed by `sag`. The only part
-  that knows where the cast is pointing.
-- **the fan** — a constant per-filament offset in the plane perpendicular to the axis, opening
-  from `spreadNear` at the hand to `spread` at the target and rolling around the axis with
-  `twist`. This is what separates one filament from the next.
-- **the kinks** — octaves of *linearly* interpolated value noise. Linear on purpose: smoothstep
-  would round the corners off, and the corners are the entire reason it reads as lightning rather
-  than as a wobbly tube.
+- **轴线**——从手到冲击点的一条直线，由 `sag` 压弯。这是唯一知道施放指向的部分。
+- **扇面**——在垂直于轴线的平面内每条丝缕的恒定偏移，从手部的 `spreadNear` 张到目标的 `spread`，并随 `twist` 绕轴滚动。这是把一条丝缕与下一条区分开的东西。
+- **扭结**——*线性*插值值噪声的多个八度。线性插值是刻意的：smoothstep 会把拐角磨圆，而拐角正是它读起来像闪电而非摇摆管道的原因。
 
-The ribbon is turned to face the camera by crossing the local tangent with the view vector, which
-is why the bolt keeps its apparent thickness from any angle without ever being a screen-space
-line. It is drawn twice — a wide soft halo underneath and the hot core on top — because drawing
-the glow as real ribbon rather than leaving it to bloom is what keeps it *attached* to every kink.
+条带通过将局部切线与视线向量叉乘来面向相机，这就是闪电从任何角度都保持表观厚度、同时又从不是屏幕空间线条的原因。它被绘制两次——底下是宽的软光晕，上面是热核——因为把辉光画成真实条带而不是留给 bloom，正是它*贴合*每一个扭结的原因。
 
-Two clocks run the flicker. `restrike` snaps every filament onto a new shape N times a second,
-and `crawl` slides the kinks continuously in between; together they stop a held bolt from looking
-like a static ribbon. A cast captures exactly one number — a seed, so two casts do not draw the
-identical bolt — and resolves every metre, radian and second against `settings.thunder` each
-frame. That is why dragging `jitter` re-kinks a bolt that is already in the air.
+两个时钟驱动闪烁。`restrike` 每秒把每条丝缕 snapped 到新形状 N 次，`crawl` 在其间连续滑动扭结；两者合力阻止驻留的闪电看起来像一条静态条带。一次施法只捕获一个数字——一个种子，使两次施法不会画出完全相同的闪电——并在每一帧对照 `settings.thunder` 解析每一米、弧度与秒。这就是拖动 `jitter` 能重新扭结一道已在空中的闪电的原因。
 
-The ground burns are worth a note as a thing *not* to do. The first version sampled the filament
-field on `atan(y, x)`, which hands every radius along a given bearing the same value and draws
-dead-straight spokes out of the centre — a firework, not a burn. Sampling the same noise in the
-plane and warping the lookup is what lets the filaments meander and fork.
+地面灼烧值得记一笔，作为一个*不该做*的反例。第一版对丝缕场按 `atan(y, x)` 采样，这使同一方位角上的每个半径得到相同的值，画出从中心向外笔直辐射的辐条——那是烟花，不是灼烧。在同一平面内采样同样的噪声并扭曲查找坐标，才让丝缕能够蜿蜒分叉。
 
-### The beam
+### 光束
 
-The Nova Beam shares the bolt's rule — no dimensions on the CPU — and reaches the opposite look
-with it. Where the bolt's whole charm is that its noise is *piecewise-linear* and keeps its
-corners, every noise term in the beam is smooth, stretched hard along the flow and crawling
-downrange. A beam that kinks is a bolt.
+新星光束共享闪电的规则——CPU 上不存尺寸——并用它达到相反的外观。闪电的全部魅力在于它的噪声是*分段线性*的并保有拐角，而光束中的每个噪声项都是平滑的、沿流向强烈拉伸的、并向下游爬行的。会扭结的光束是闪电。
 
-It is a real tube rather than a camera-facing ribbon, because a column this thick has to *have* a
-cross-section: the silhouette must bow correctly when you orbit it, the far wall must add through
-the near one, and the shock discs have to hug it. `createBeamTubeGeometry` is the ribbon strip one
-dimension richer — every vertex carries `(t, a)`, how far along the barrel it is and how far around
-— and `materials/BeamMaterial.js` turns that pair into a world position each frame.
+它是真正的管道而非面向相机的条带，因为这么粗的柱子必须*有*横截面：环绕观察时轮廓必须正确地弯曲，远壁必须能透过近壁叠加，冲击盘必须能贴合它。`createBeamTubeGeometry` 是比条带多一维的 ribbon 条带——每个顶点携带 `(t, a)`：沿柱身多远，绕柱身多少——`materials/BeamMaterial.js` 每帧把这一对参数变成世界坐标。
 
-That one tube is drawn three times, and the trick is in how the three are weighted:
+这一条管道被绘制三次，而诀窍就在三层的权重上：
 
-- **halo** — widest, nothing but a rim term. The atmosphere the beam is shoving out of the way.
-- **sheath** — rim-weighted, so it reads as *hollow* and its silhouette edges are its brightest part.
-- **core** — narrow, and weighted the **opposite** way: brightest where the view ray runs down the
-  barrel and its path through the tube is longest.
+- **halo**——最宽，只有边缘项。光束正在推开的大气。
+- **sheath**——边缘加权，因此读起来是*中空*的，其轮廓边缘正是它最亮的部分。
+- **core**——窄，权重方式**相反**：视线沿柱身方向穿管路径最长处最亮。
 
-Rim-weighted outside, axis-weighted inside, both faces adding: that is a volume integral, cheaply,
-and the inversion is the entire reason the middle reads as a solid rod of light instead of as a lit
-pipe. Widen `coreWidth` or push `coreFill` up and the three layers collapse into one white tube —
-the cyan sheath and the gold coils are only legible because the core leaves them room.
+外缘边缘加权、内轴轴向加权、双面叠加：这就是一个廉价的体积积分，而这个反转正是中间读起来像一根实心光柱而非一根被照亮的管子的全部原因。加宽 `coreWidth` 或推高 `coreFill`，三层就会塌缩成一根白色管子——青色鞘层与金色线圈之所以清晰可辨，仅仅因为核心给它们留出了空间。
 
-Two more instanced passes put structure on it. The **coils** are the bolt's ribbon strip bent into a
-helix, camera-facing and warm on purpose — the colour split is what stops them dissolving into the
-sheath. The **shock discs** are an instanced annulus whose phase is `fract(index / count + time ×
-speed)`, so the train is a pure function of the clock and there is no queue on the CPU. Both place
-themselves against the same `beamRadius()` the tube uses, which is why all five stay welded together
-when the profile is dragged.
+两个额外的实例化 pass 在其上叠加结构。**线圈**是把闪电的条带弯成螺旋，面向相机且刻意偏暖——色彩分裂正是阻止它们溶解进鞘层的东西。**冲击盘**是实例化的环，其相位为 `fract(index / count + time × speed)`，因此整列火车是时钟的纯函数，CPU 上没有队列。两者都贴合管道使用的同一个 `beamRadius()`，这就是为什么拖动轮廓时全部五层仍然焊接在一起。
 
-The beam is also the one ability with a **fourth beat**. The other three run travel → impact →
-fade; this one puts a wind-up in front of that, and it needed nothing from the base class:
-`advance()` simply refuses to let the front leave the hand until the orb is up to power, so `IMPACT`
-becomes the burn and the phase machine is untouched. The far end therefore has an impact that keeps
-happening — spray thrown back up the line, pressure shells shed off the burning point, dust and
-shockwave rings pushed across the floor, all rate-throttled through the same fractional-rate emitter
-the particles use so every rate is a live slider.
+光束也是唯一有**第四拍**的技能。其余三个都是 行进 → 冲击 → 消退；这一个在前面加了一段蓄力，而它不需要基类的任何东西：`advance()` 简单地拒绝让前沿离开手，直到光球蓄满功率，于是 `IMPACT` 变成了灼烧，而阶段机原封未动。因此它的远端有一个持续发生的冲击——碎屑沿直线向上反抛、压力壳从燃烧点脱落、尘土与冲击波环推过地面——全部通过粒子所用的同一个分数速率发射器限流，因此每个速率都是实时滑杆。
 
-### The snare
+### 雷网
 
-The Voltaic Snare is the first ability built around a *point* instead of a line, and the thing that
-holds it together is that `zoneRadius` is read in exactly one place per consumer and nowhere is it
-copied: the indicator measures it out, the tendrils end on it, the rim arcs run along it, the field
-burns it and the column's throat and flare are fractions of it. Drag it and all five move together,
-mid-cast, with the clock stopped.
+雷电之网是第一个围绕*点*而非直线构建的技能，而把它凝聚在一起的东西是：`zoneRadius` 在每个消费者中恰好只被读取一处，且没有任何地方拷贝它：指示器量出它，触须止于它，边缘弧光沿它运行，领域灼烧它，光柱的喉部与张开都是它的分数。拖动它，全部五处同时移动——施法中途、时钟停止时。
 
-The whole cage — the whip that plants it, the pillar, the tendrils and the rim arcs — is **one
-instanced ribbon strip**, the same one the bolt and the beam's coils are drawn on. A filament's
-*role* is decided in the vertex shader by testing its instance index against four live counts, and
-the role picks which parametric path it is threaded along:
+整个笼体——植网的鞭索、光柱、触须与边缘弧光——是**一条实例化条带**，就是闪电与光束线圈所画的那同一条。一条丝缕的*角色*由顶点着色器将其实例索引对四个实时计数做测试决定，而角色决定它被穿引到哪条参数路径上：
 
-- **leash** — a sagging line from the hand to the travelling tip, dropped onto the floor.
-- **column** — a twisting climb whose radius opens from `throat` to `columnSpread`.
-- **tendril** — a meander running outward, its veer a per-filament constant rather than noise, so
-  it curves the way a discharge that has committed to a direction does.
-- **rim** — an arc travelling around the boundary, hopping over it at mid-span.
+- **leash（鞭索）**——从手到行进尖端的一条下垂曲线，落至地面。
+- **column（光柱）**——一段盘旋上升、半径从 `throat` 张开到 `columnSpread` 的攀爬。
+- **tendril（触须）**——一条蜿蜒向外爬行、其转向是每条丝缕的常量而非噪声的曲线，因此它弯折起来像一道已认定方向的放电。
+- **rim（边缘弧）**——一段沿边界运行的弧线，在跨段中点处跃过边界。
 
-Every offset then lives in a frame taken by finite difference off that path, which is what lets one
-kink function serve a vertical pillar and a filament crawling flat across the floor. The two
-ground-hugging roles damp the vertical component of that offset and clamp above the floor — a kink
-with a free `y` buries half of every tendril and the effect reads as a broken dotted line. Setting
-a count to zero retires the role outright, which is how the leash disappears on the frame the ring
-takes over. Two draw calls cover all four roles, however many filaments are in the air.
+每个偏移随后都生活在一个由该路径有限差分取得的坐标架中，这正是让一个扭结函数同时服务于垂直光柱与贴地爬行的丝缕的原因。两个贴地角色会阻尼该偏移的垂直分量并钳制在地板上方——一个 y 自由的扭结会把每条触须埋掉一半，效果读起来像断掉的虚线。把某个计数设为零即可让该角色 outright 退场，这正是鞭索在圆环接管的同一帧消失的方式。无论空中有多少条丝缕，四个角色只需两次 draw call 全部覆盖。
 
-The **field** is a quad rather than a pooled decal for one reason: a decal captures its radius when
-it spawns, and this circle has to re-scale under `zoneRadius` while it is standing. Its veins are
-sampled in the plane and domain warped — the same lesson the bolt's ground burns taught, and for
-the same reason.
+**领域（field）**是一张四边形而非池化贴花，原因只有一个：贴花会在生成时捕获其半径，而这个圆必须在站立期间随 `zoneRadius` 重新缩放。它的脉络在平面内采样并做了域扭曲——这是闪电地面灼烧教过的同一课，出于同一个原因。
 
-The one thing worth stealing for the next far cast is the **snap**: the ring opens on
-`Easing.outCubic` multiplied by a bump that peaks late and dies at exactly 1, so it overshoots its
-radius and pulls back onto it, and the pillar climbs on the same clock 1.7× slower. The ground goes
-first, then the air breaks down over it.
+值得为下一个远程施法偷走的一个东西是**snap**：圆环以 `Easing.outCubic` 张开，乘上一个峰值偏晚、恰好在 1 处归零的鼓包，因此它会冲过自身半径再回缩贴合，而光柱以同一时钟 1.7 倍慢的速度攀爬。地面先动，然后其上的空气才被击穿。
 
-### Adding another ability
+### 添加另一个技能
 
-1. Add a settings block in `config/settings.js` and an entry in `ELEMENTS` / `ELEMENT_META`.
-2. Subclass `Ability` and implement `createShaders`, `createParticles`, `onTravel`, `onImpact`,
-   `onFade`.
-3. Register the class in `abilities/AbilityManager.js`.
-4. Add an editor folder in `ui/Editor.js`, and a sigil in `ui/glyphs.js`.
-5. Bind a key in `input/InputManager.js` — it emits `ability` with the 0-based slot index, which
-   `App` maps through `ELEMENTS`.
+1. 在 `config/settings.js` 中添加一个 settings 块，并在 `ELEMENTS` / `ELEMENT_META` 中添加入口。
+2. 继承 `Ability` 并实现 `createShaders`、`createParticles`、`onTravel`、`onImpact`、`onFade`。
+3. 在 `abilities/AbilityManager.js` 中注册这个类。
+4. 在 `ui/Editor.js` 中添加一个编辑器文件夹，并在 `ui/glyphs.js` 中添加一个纹章。
+5. 在 `input/InputManager.js` 中绑定一个按键——它发出带 0 基槽位索引的 `ability` 事件，`App` 通过 `ELEMENTS` 做映射。
 
-To make it a **far cast** instead of a line cast, add two things and nothing else: `cast:
-CastShape.ZONE` in its `ELEMENT_META` entry, and a `zoneRadius` in its settings block. The circle
-indicator, the reach ring, the snap-out and the whole targeting loop come for free, and the ability
-reads its centre as `pointAt(1)`.
+若要使其成为**远程施法**而非线性施法，只需再加两样东西：在其 `ELEMENT_META` 条目中加 `cast: CastShape.ZONE`，并在其 settings 块中加 `zoneRadius`。圆圈指示器、触及环、snap-out 与整个瞄准循环全部免费获得，技能将其中心读作 `pointAt(1)`。
 
-Everything else — pooling, the travelling front, the local frame, lights, phases, per-ability
-cooldowns, the aim reach and camera framing — is inherited or driven off `ELEMENTS`. The HUD
-builds its slots from that array, so a new ability appears in the bar on its own.
+其余一切——池化、行进前沿、局部坐标架、灯光、阶段、逐技能冷却、瞄准射程与相机取景——都是继承而来或由 `ELEMENTS` 驱动。HUD 由其槽位构建自该数组，因此一个新技能会自动出现在技能栏上。
 
-### Particles
+### 粒子
 
-`particles/ParticleSystem.js` is a GPU-simulated, instanced-quad system. Motion (velocity, gravity,
-analytic drag, curl turbulence, vortex swirl), size-over-lifetime, the colour gradient and alpha
-fade are all evaluated in the shader from per-instance attributes; the CPU only ever writes spawn
-data, and only the slots that changed are uploaded. Particles live in a ring buffer, so spamming
-the ability recycles slots instead of allocating. Silhouettes (soft, smoke, streak, leaf, chip,
-ring) are procedural — there are no sprite textures anywhere in the project.
+`particles/ParticleSystem.js` 是一个 GPU 模拟、实例化四边形的系统。运动（速度、重力、解析阻尼、卷曲湍流、涡旋）、生命周期内尺寸变化、颜色渐变与透明度衰减全部在着色器中由逐实例属性求值；CPU 只写生成数据，且只上传变化了的槽位。粒子生活在环形缓冲区中，因此连发技能回收槽位而非分配。轮廓（软圆、烟、拖尾、叶、碎屑、环）是程序化的——项目中没有任何精灵贴图。
 
-Frost Lance uses three systems: **mist** (non-additive, so the fog genuinely occludes and gives the
-field depth), **shards** (lit chips under gravity) and **glitter** (additive, negative gravity — the
-rising plume that is the signature of the reference frame).
+寒霜之枪使用三个系统：**雾气**（非加色混合，因此雾能真正遮挡并赋予冰场深度）、**碎冰**（受光照的、受重力的碎屑）与**闪粉**（加色、负重力——正是参考画面的标志性上升烟柱）。
 
-Storm Lance uses four: **sparks** (velocity-stretched streaks under gravity), **motes** (the slow
-ionised drift around the bolt), **smoke** (non-additive haze off the scorched floor) and **debris**
-(lit chips). Its sparks are emitted from several points along the bolt each frame rather than one:
-a beam sheds along its whole length, and a single origin makes every batch read as a starburst.
+风暴之枪使用四个：**火花**（受重力、沿速度拉伸的拖尾）、**浮尘**（闪电周围缓慢电离的漂移）、**烟雾**（焦地板上冒出的非加色霾）与**碎屑**（受光照的碎片）。它的火花每帧从闪电上的多个点发射而非单点：一道束流沿其全长脱落，而单一起点会让每一批都读作星芒爆发。
 
-Nova Beam uses four as well, and works one of them twice: its **motes** are the intake spiralling
-*into* the orb while it charges and the drift shed off the column once it is firing — the same glow,
-thrown the other way. Its **sparks** are thrown radially off the barrel and then dragged downrange
-by `sparkForward`, which is the read that says "pressure"; the bolt's fall instead, and that one
-difference does a lot of the work of keeping the two abilities apart.
+新星光束同样使用四个，并将其之一使用两次：它的**浮尘**在光球蓄力时螺旋*吸入*，又在柱体发射后成为从柱上脱落的漂移——同一种辉光，换个方向抛出。它的**火花**沿柱体径向抛出后又被 `sparkForward` 向下游拖拽，这是表达"压力"的读法；闪电的火花则下落——这一个差异就足以让两个技能保持区分。
 
-### Render pipeline
+### 渲染管线
 
-Per frame:
+每帧：
 
-1. **Depth prepass** — the opaque world into a half-res packed-depth buffer. Every VFX shader
-   samples it for soft intersections, so nothing cuts a hard line into the ground. The crystals sit
-   on `LAYER.WORLD`, so mist and glitter fade softly against them.
-2. **Distortion pass** — meshes on the distortion layer write screen-space UV offsets into a second
-   half-res buffer. Nothing writes to it in the current build; the pass is kept because it is the
-   hook a refraction effect would use.
-3. **Composer** — scene → refraction warp → bloom → tone map (ACES) → grade.
+1. **深度预传**——不透明世界渲入半分辨率打包深度缓冲。每个 VFX 着色器都采样它来做软相交，因此没有任何东西会在地上切出硬边。水晶位于 `LAYER.WORLD` 上，因此雾气与闪粉会对它们柔和淡出。
+2. **扰动 pass**——扰动层上的网格把屏幕空间 UV 偏移写入第二个半分辨率缓冲。当前构建中没有东西写入它；保留该 pass 是因为它是折射效果将使用的挂点。
+3. **Composer**——场景 → 折射扭曲 → bloom → 色调映射（ACES）→ 校色。
 
-The grade pass folds chromatic aberration, lift/gain/contrast/saturation/temperature, vignette,
-film grain and the impact flash into one resample.
+校色 pass 将色散、lift/gain/对比度/饱和度/色温、暗角、胶片颗粒与冲击闪白折叠进一次重采样。
 
-Shadows come from a single directional light whose orthographic shadow camera is re-centred on the
-character each frame and fitted to a 52 m box at 4096² (~1.3 cm/texel). The `three/addons` CSM
-module was tried first and removed: it replaces three's `lights_fragment_begin` chunk *globally*,
-so any material not explicitly registered with it silently loses all directional lighting.
+阴影来自单个平行光，其正交阴影相机每帧在角色身上重新居中，并适配一个 52 米盒体、4096²（约 1.3 厘米/纹素）。`three/addons` 的 CSM 模块曾被尝试然后移除了：它会*全局*替换 three 的 `lights_fragment_begin` chunk，因此任何未向它显式注册的材质都会静默失去所有平行光照明。
 
-Contact shadows are a real render: the character's depth is captured from below into a 256²
-target, blurred twice and projected onto the ground.
+接触阴影是真实的渲染：角色的深度从下方捕获进一个 256² 目标，模糊两次后投影回地面。
 
 ---
 
-## Editor and presets
+## 编辑器与预设
 
-Press **G** for the panel. Folders: Presets, Global, Aim indicator, Far-cast circle, Frost Lance,
-Storm Lance, Cinder Fall, Nova Beam, Voltaic Snare, Environment, Post processing, Camera,
-Character. Every folder starts collapsed — there are enough controls here that one open section
-pushes the rest off the screen.
+按 **G** 打开面板。文件夹：Presets、Global、Aim indicator、Far-cast circle、Frost Lance、Storm Lance、Cinder Fall、Nova Beam、Voltaic Snare、Environment、Post processing、Camera、Character。每个文件夹默认折叠——这里的控件多到打开一个区块就会把其余挤出屏幕。
 
-- **Global** multipliers scale everything at once (speed, glow, noise, particles, lights, impact
-  intensity, camera shake, time scale…).
-- **Aim indicator** — the arrow's silhouette in metres, its outline and fill, the chevrons and
-  frost, and the rings and rosette.
-- **Far-cast circle** (40 controls) — the boundary band, the interior, the ticks, sweep and
-  reticle, the reach ring, and the snap-out. Shared by every far cast, so it is filed with the
-  targeting rather than with any one ability.
-- **Frost Lance** (113 controls, 25 of them colours) — the cast, the footprint, the silhouette,
-  the crystal itself, the eruption timing, the ice material, the frost on the ground,
-  mist/chips/glitter, the impact and the dynamic light.
-- **Storm Lance** (123 controls, 34 of them colours) — the cast, where the bolt leaves the hand,
-  the bundle, one filament, the ribbon, flicker and restrike, the bolt's colour, the burns on the
-  ground, sparks/motes/smoke/debris, the muzzle and impact, and the dynamic light.
-- **Nova Beam** (176 controls) — the cast, where it leaves the hands, the column, the core/sheath/
-  halo stack, the surface and its flow, the beam's colour, the coils, the shock discs, the charge
-  and its intake, what the floor does, sparks/motes/steam/debris, release/impact/burn, and the two
-  dynamic lights.
-- **Voltaic Snare** (174 controls, 33 of them colours) — the cast and its footprint, the leash, the
-  column, the tendrils, the rim arcs, the shared filament shape and flicker, the ribbon and its
-  colour, the field on the floor, the burns, sparks/updraft/smoke/debris, throw/snap/hold, and the
-  dynamic light.
-- **Presets** save to `localStorage`, and can be duplicated, deleted, exported to JSON, imported
-  from JSON, or reset to the shipped defaults.
+- **Global** 倍率一次性缩放一切（速度、辉光、噪声、粒子、灯光、冲击强度、相机抖动、时间倍率……）。
+- **Aim indicator**——箭头的米制轮廓、其描边与填充、V 形箭标与霜冻，以及圆环与霜花。
+- **Far-cast circle**（40 个控件）——边带、内部、刻度、扫描与准星、触及环以及 snap-out。由每个远程施法共享，因此它与瞄准系统归为一类，而非归入任何单一技能。
+- **Frost Lance**（113 个控件，其中 25 个是颜色）——施法、足迹、轮廓、水晶本体、喷发时序、冰材质、地面霜冻、雾气/碎屑/闪粉、冲击与动态光。
+- **Storm Lance**（123 个控件，其中 34 个是颜色）——施法、闪电离手位置、丝束、单条丝缕、条带、闪烁与重击、闪电颜色、地面灼烧、火花/浮尘/烟雾/碎屑、枪口与冲击，以及动态光。
+- **Nova Beam**（176 个控件）——施法、离手位置、柱体、core/sheath/halo 三层栈、表面及其流动、光束颜色、线圈、冲击盘、蓄力及其吸入、地面的反应、火花/浮尘/蒸汽/碎屑、释放/冲击/灼烧，以及两盏动态光。
+- **Voltaic Snare**（174 个控件，其中 33 个是颜色）——施法及其足迹、鞭索、光柱、触须、边缘弧光、共享丝缕形状与闪烁、条带及其颜色、地面领域、灼烧、火花/上升气流/烟雾/碎屑、投掷/snap/驻留，以及动态光。
+- **Presets** 保存到 `localStorage`，可复制、删除、导出为 JSON、从 JSON 导入，或重置为出厂默认。
 
-Every ability exposes **every** colour it draws with, and none is derived from another: the crystal
-palette, the bolt palette, the beam's four layers and its coils and discs, the ground marks, the
-impact shells, the shockwave rings, the screen flashes, and a four-stop lifetime gradient
-(`birth → early → late → death`) for each particle system. Tinting the fog without touching the ice,
-or cooling the sparks to orange while the filaments stay blue, is a picker away.
+每个技能暴露它绘制的**每一种**颜色，且没有任何一种由其他颜色派生：水晶调色板、闪电调色板、光束的四层及其线圈与圆盘、地面痕迹、冲击壳、冲击波环、屏幕闪白，以及每个粒子系统的四站生命周期渐变（`出生 → 早期 → 晚期 → 消亡`）。只给雾气着色而不动冰，或把火花冷却成橙色而让丝缕保持蓝色，都是一次取色之遥。
 
-Presets are plain snapshots of the settings tree, so an exported file is readable and editable by
-hand.
+预设就是 settings 树的纯快照，因此导出的文件可以手工阅读与编辑。
 
-Knobs worth knowing about, because they reshape their ability the most:
+值得了解的旋钮，因为它们对技能外形的重塑最大：
 
-- `ice.heightCurve` — how late the ramp climbs; raise it and the field stays low until it explodes
-  at the target. `ice.frontBias` below 1 crowds the crystals toward the impact point.
-- `thunder.jitter` and `thunder.jitterScale` — how violently the bolt kinks, and how often.
-  `thunder.strands` and `thunder.spread` set how wide the bundle reads, and `thunder.restrike`
-  how hard it strobes. Those five carry the character of the effect.
-- `beam.radius` and `beam.flare` — how heavy the column reads and how hard it opens out where it
-  lands. `beam.charge` and `beam.lifetime` are the wind-up and the hold, which are what make this
-  ability feel unlike the other three, and `beam.coreWidth` / `beam.coreFill` decide whether the
-  layers stay separable or blow out to white.
-- `snare.zoneRadius` — the one number the whole far cast is built on. It resizes the targeting
-  circle, the tendrils, the rim arcs, the burnt field and the pillar's throat together, live.
-  After that, `snare.snapTime` and `snare.height` carry the moment it opens, and `snare.tendrils` /
-  `snare.rimArcs` / `snare.strands` decide how much of that footprint is actually lit.
-- `zone.boundary` and `zone.snap` — how thick the far-cast circle's edge reads, and how hard it
-  overshoots on the way out. Between them they decide whether the indicator feels like a UI overlay
-  or like something the caster is doing.
+- `ice.heightCurve`——爬坡多晚开始爬升；调高它，冰场会一直保持低伏直到在目标点炸开。`ice.frontBias` 低于 1 会把水晶向冲击点聚拢。
+- `thunder.jitter` 与 `thunder.jitterScale`——闪电扭结多剧烈，以及多频繁。`thunder.strands` 与 `thunder.spread` 决定丝束的宽度观感，`thunder.restrike` 决定其频闪强度。这五个承载了效果的个性。
+- `beam.radius` 与 `beam.flare`——柱体读起来的厚重感，以及它在落点张开得多猛。`beam.charge` 与 `beam.lifetime` 是蓄力与驻留，正是它们让这个技能感觉不同于其他三个，而 `beam.coreWidth` / `beam.coreFill` 决定三层是保持可分还是炸成一片白。
+- `snare.zoneRadius`——整个远程施法赖以构建的那个数字。它实时联动缩放瞄准圈、触须、边缘弧光、灼烧领域与光柱喉部。之后，`snare.snapTime` 与 `snare.height` 承载它张开的那一刻，`snare.tendrils` / `snare.rimArcs` / `snare.strands` 决定那块足迹实际被点亮多少。
+- `zone.boundary` 与 `zone.snap`——远程施法圆圈的边缘读起来的厚度，以及它弹出时的过冲力度。这两者共同决定指示器感觉像 UI 覆盖层，还是像施法者正在做的某件事。
 
 ---
 
-## Performance notes
+## 性能说明
 
-- Abilities, decals, bursts and particles are pooled, per type. Twelve casts in a row build at most
-  **four** instances of an ability and then stop allocating.
-- The whole crystal field is three draw calls regardless of crystal count; the cap is 288.
-- A whole bolt is **two** draw calls regardless of filament count; the cap is 24 filaments at 72
-  samples each. Nothing about the path touches the CPU, so `strands` is nearly free.
-- A whole snare — leash, pillar, tendrils and rim arcs — is **two** draw calls plus one for the
-  field, regardless of how many filaments are in it; the cap is 56 across the four roles. As with
-  the bolt, none of the shape touches the CPU, so raising `tendrils` or `rimArcs` is nearly free.
-  Its targeting circle is two more: one quad and one ring strip.
-- A whole beam is **six** draw calls regardless of how many coils and discs are on it — three tube
-  passes over one shared geometry, plus one instanced draw each for the coils, the discs and the
-  charge orb. As with the bolt, none of the shape touches the CPU, so `coils` and `rings` are
-  nearly free. It takes two of the six dynamic lights (the column and the caster's hands), so four
-  concurrent beams would exhaust the pool; `LightPool.acquire()` returns null and every use of the
-  handle is guarded.
-- The six dynamic point lights are created at boot and parked at zero intensity rather than added
-  and removed — changing the light count forces three to recompile every material.
-- Shadow maps update exactly once per frame even though the scene is rendered several times.
-- `renderer.compileAsync()` runs during boot so the first cast never stutters on shader compile.
-- Pixel ratio is capped at 1.75; the depth and distortion buffers are half resolution.
+- 技能、贴花、爆裂球与粒子按类型池化。连施十二次最多构建某技能的 **四个**实例，然后停止分配。
+- 整个水晶场无论水晶数量都只有三次 draw call；上限 288 根。
+- 一道完整闪电无论丝缕数量都只有 **两次** draw call；上限 24 条丝缕 × 72 个采样点。路径没有任何部分触碰 CPU，因此 `strands` 几乎是免费的。
+- 一个完整的雷网——鞭索、光柱、触须与边缘弧光——无论空中有多少丝缕都只有 **两次** draw call，外加领域一次；四个角色合计上限 56。与闪电相同，形状没有任何部分触碰 CPU，因此提高 `tendrils` 或 `rimArcs` 几乎是免费的。它的瞄准圈再加两次：一张四边形加一条环带。
+- 一道完整光束无论上面有多少线圈与圆盘都只有 **六次** draw call——一个共享几何上三次管道 pass，加上线圈、圆盘与蓄力光球各一次实例化绘制。与闪电相同，形状没有任何部分触碰 CPU，因此 `coils` 与 `rings` 几乎是免费的。它占用六盏动态光中的两盏（柱体与施法者双手），因此四道并发光束会耗尽灯光池；`LightPool.acquire()` 会返回 null，而句柄的每一处使用都做了防护。
+- 六盏动态点光在启动时创建并停在零强度，而非增删——改变灯光数量会迫使每个材质重编译。
+- 即使场景被渲染多次，阴影贴图每帧恰好更新一次。
+- `renderer.compileAsync()` 在启动期间运行，因此第一次施法绝不会因着色器编译而卡顿。
+- 像素比上限 1.75；深度与扰动缓冲为半分辨率。
 
-Measured on a default cast: 32 draw calls idle, ~69 with a full ice field standing and ~49 with a
-bolt in the air, ~1150 live particles. A snare standing with its cage, field and rim burns is ~45
-draw calls and ~480 live particles, and arming its circle costs two. Four concurrent casts —
-the pool's ceiling, whichever slots they came from — peaks at ~186 draw calls and five of the six
-dynamic lights.
+实测（默认施法）：空闲 32 次 draw call；完整冰场站立时约 69 次，闪电在空中时约 49 次；约 1150 个存活粒子。一个带笼体、领域与边缘灼烧的站立雷网约 45 次 draw call、约 480 个存活粒子，备战其圆圈再加两次。四个并发施法——池子上限，无论来自哪些槽位——峰值约 186 次 draw call，占用六盏动态光中的五盏。
 
-Live counters (FPS, live particles, instances, draw calls) are in the top-right of the HUD.
+实时计数器（FPS、存活粒子、实例数、draw call）位于 HUD 右上角。
 
 ---
 
-## The archive
+## 存档（archive）
 
-`src/archive/` holds the previous incarnation of this project: a four-element bending sandbox
-(fire, water, earth, air) cast along a freehand-drawn spline, plus a walk mode that let the avatar
-ride the same stroke. None of it is imported by the live app, so Vite never bundles it.
+`src/archive/` 存放本项目的前身：一个四元素驭术沙盒（火、水、土、风），沿手绘样条施放，外加一个让化身沿同一笔迹行走的步行模式。其中没有任何内容被现行应用引用，因此 Vite 从不打包它。
 
-It was retired because this build replaced path drawing with a linear skillshot, which removed the
-input every one of those systems was built on. The raymarched flame and water surfaces in
-particular are worth mining. See `src/archive/README.md` for what is in there and how to restore a
-piece of it.
+它被退役是因为本版以线性 skillshot 取代了路径绘制，从而移除了那些系统赖以存在的输入。其中特别值得挖掘的是 raymarch 火焰与水面。内容清单与恢复某一部分的方法见 `src/archive/README.md`。
 
 ---
 
-## Known rough edges
+## 已知瑕疵
 
-- Crystals are drawn with `transparent: true` and `depthWrite: true`. That is the right trade for
-  near-opaque ice and it keeps the field from sorting through itself, but at low `ice.opacity` the
-  sorting artefacts between overlapping spikes become visible.
-- The eruption front is a straight line on a flat floor. Both assumptions are baked in — the ground
-  is a single plane at y = 0, and the aim raycast targets that plane.
-- The distortion pass runs with nothing writing to it. It costs a half-res clear per frame.
-- The impact cluster is placed radially around the end point, so at very short cast distances it
-  can overlap the band behind it more than it should.
-- The far cast inherits the flat-floor assumption twice over: the circle is drawn on a single quad
-  at `y = 0`, and the snare's tendrils and rim arcs are placed against that same plane. Neither
-  would drape over a step.
-- Both the targeting circle and the snare's field are additive, so the footprint brightens the
-  floor rather than shading it. On a pale floor the boundary would need a non-additive pass under
-  it to stay readable.
+- 水晶以 `transparent: true` 且 `depthWrite: true` 绘制。这对近乎不透明的冰是正确的取舍，并防止冰场自身穿插排序，但在低 `ice.opacity` 下，重叠冰刺之间的排序伪影会变得可见。
+- 喷发前沿是平地上的直线。两个假设都被烘焙了进去——地面是 y = 0 的单一平面，瞄准 raycast 也以该平面为目标。
+- 扰动 pass 在没有任何写入的情况下运行。它每帧花费一次半分辨率 clear。
+- 冲击簇围绕终点径向布置，因此在极短施法距离下，它与后方条带的重叠会超出应有程度。
+- 远程施法双重继承了平地假设：圆圈画在 y = 0 的单张四边形上，雷网的触须与边缘弧光也贴合同一平面。两者都不会 drap 在台阶上。
+- 瞄准圈与雷网领域都是加色混合，因此足迹是提亮地面而非为其着色。在浅色地板上，边界下方需要一次非加色 pass 才能保持可读。
 
 ---
 
-## Licence
+## 许可
 
-Code is provided as-is for the purposes of this project. The bundled HDR probe and the character
-FBX retain their original licences.
+代码按原样提供，用于本项目之目的。捆绑的 HDR 探针与角色 FBX 保留其原始许可。

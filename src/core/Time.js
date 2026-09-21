@@ -1,30 +1,30 @@
 /**
- * Frame timer.
+ * 帧计时器。
  *
- * A three-line replacement for THREE.Clock (deprecated in recent releases) that
- * also owns the delta clamp: a background tab or a long shader compile must
- * never hand the simulation a multi-second step.
+ * 用三行代码替代 THREE.Clock（在近几个版本中已废弃），
+ * 同时接管 delta 的钳制：一个后台标签页或一次漫长的着色器编译，
+ * 永远不能把好几秒的时间步长塞给模拟。
  */
 export class Time {
-  constructor(maxDelta = 1 / 20) {
-    this.maxDelta = maxDelta;
-    this.elapsed = 0;
-    this.delta = 0;
-    this._last = performance.now() / 1000;
-  }
+    constructor(maxDelta = 1 / 20) {
+        this.maxDelta = maxDelta;
+        this.elapsed = 0;
+        this.delta = 0;
+        this._last = performance.now() / 1000;
+    }
 
-  /** @returns {number} clamped seconds since the previous tick */
-  tick() {
-    const now = performance.now() / 1000;
-    this.delta = Math.min(now - this._last, this.maxDelta);
-    this._last = now;
-    this.elapsed += this.delta;
-    return this.delta;
-  }
+    /** @returns {number} 距上一次 tick 的秒数，已做钳制 */
+    tick() {
+        const now = performance.now() / 1000;
+        this.delta = Math.min(now - this._last, this.maxDelta);
+        this._last = now;
+        this.elapsed += this.delta;
+        return this.delta;
+    }
 
-  /** Call after a long pause (asset load, tab switch) to avoid a jump. */
-  reset() {
-    this._last = performance.now() / 1000;
-    this.delta = 0;
-  }
+    /** 长时间暂停（资源加载、切换标签页）之后调用，以避免时间跳变。 */
+    reset() {
+        this._last = performance.now() / 1000;
+        this.delta = 0;
+    }
 }

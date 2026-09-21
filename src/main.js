@@ -2,26 +2,26 @@ import { App } from './core/App.js';
 import { LoadingScreen } from './ui/HUD.js';
 
 /**
- * Entry point.
+ * 入口点。
  *
- * Everything interesting lives in `core/App.js`; this file only wires the app
- * to the page and reports fatal boot errors somewhere the user can see them.
+ * 所有有意思的东西都在 `core/App.js` 里；本文件只负责把应用接到页面上，
+ * 并把致命的启动错误报告到用户看得见的地方。
  */
 const canvas = document.getElementById('viewport');
 
 async function boot() {
-  try {
-    const app = new App(canvas);
-    await app.load();
+    try {
+        const app = new App(canvas);
+        await app.load();
 
-    // Handy for poking at the scene from the console.
-    window.app = app;
-  } catch (error) {
-    console.error('[boot] failed to start', error);
-    new LoadingScreen().fail(
-      error?.message ? `Failed to start: ${error.message}` : 'Failed to start — see the console.'
-    );
-  }
+        // 方便在控制台里摆弄场景。
+        window.app = app;
+    } catch (error) {
+        console.error('[boot] failed to start', error);
+        new LoadingScreen().fail(
+            error?.message ? `Failed to start: ${error.message}` : 'Failed to start — see the console.'
+        );
+    }
 }
 
 boot();

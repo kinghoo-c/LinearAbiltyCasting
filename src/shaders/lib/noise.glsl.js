@@ -1,11 +1,11 @@
 /**
- * Procedural noise library (GLSL ES 1.00 compatible).
+ * 程序化噪声库（兼容 GLSL ES 1.00）。
  *
- * Everything in this project is procedural — there are no noise textures — so
- * this chunk is injected into most of the custom materials. It is written once
- * and shared to keep shader source (and the compiler cache) small.
+ * 本项目里的一切都是程序化的——没有噪声贴图——因此这个 chunk 会被注入到
+ * 大多数自定义材质中。它只写一份并共享，以减小着色器源码（以及编译器缓存）
+ * 的体积。
  *
- * Contains: hashes, 3D simplex noise, fbm, ridged fbm, curl noise, voronoi.
+ * 包含：各种哈希、3D simplex 噪声、fbm、脊状 fbm、curl noise、voronoi。
  */
 export const noiseGLSL = /* glsl */ `
 #ifndef NOISE_LIB_INCLUDED
@@ -41,7 +41,7 @@ float hash13(vec3 p3) {
   return fract((p3.x + p3.y) * p3.z);
 }
 
-/* ---- Ashima / Stefan Gustavson simplex noise ---- */
+/* ---- Ashima / Stefan Gustavson 的 simplex 噪声 ---- */
 float snoise(vec3 v) {
   const vec2 C = vec2(1.0 / 6.0, 1.0 / 3.0);
   const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
@@ -99,7 +99,7 @@ float snoise(vec3 v) {
   return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
 }
 
-/** snoise remapped to 0..1 */
+/** snoise 重映射到 0..1 */
 float snoise01(vec3 p) { return snoise(p) * 0.5 + 0.5; }
 
 float fbm3(vec3 p) {
@@ -124,7 +124,7 @@ float fbm4(vec3 p) {
   return v;
 }
 
-/** Ridged multifractal — sharp filaments, ideal for flames and cracks. */
+/** 脊状多重分形（ridged multifractal）——锐利的丝状结构，非常适合火焰与裂纹。 */
 float ridged(vec3 p, int unusedOctaves) {
   float v = 0.0;
   float a = 0.5;
@@ -136,7 +136,7 @@ float ridged(vec3 p, int unusedOctaves) {
   return v;
 }
 
-/** Divergence-free curl noise — used to swirl particles and flames. */
+/** 无散度的 curl noise——用于让粒子与火焰产生旋涡。 */
 vec3 curlNoise(vec3 p) {
   const float e = 0.12;
   vec3 dx = vec3(e, 0.0, 0.0);
@@ -158,7 +158,7 @@ vec3 curlNoise(vec3 p) {
   return normalize(cross(grad1, grad2) + 1e-5);
 }
 
-/** Cheap 2D voronoi. Returns x = distance to closest cell, y = cell id hash. */
+/** 廉价的 2D voronoi。返回 x = 到最近单元的距离，y = 单元 id 哈希。 */
 vec2 voronoi2(vec2 p) {
   vec2 n = floor(p);
   vec2 f = fract(p);

@@ -6,70 +6,63 @@ import { settings } from '../config/settings.js';
 import { getColor } from '../utils/color.js';
 
 /**
- * The two passes the cage is drawn in. Same geometry, same paths, same
- * uniforms — only the ribbon width and the cross-ribbon profile differ, exactly
- * as with the bolt.
+ * 笼子绘制的两个 pass。几何相同、路径相同、uniform 相同——只有缎带宽度和
+ * 横跨缎带的剖面不同，与闪电（bolt）完全一致。
  */
 export const SnarePass = Object.freeze({
-  CORE: 0, // the hot filaments themselves
-  GLOW: 1 // the wide halo they sit inside
+    CORE: 0, // 白热化的细丝本身
+    GLOW: 1, // 包裹它们的宽大辉光
 });
 
 /**
- * The four things a filament can be.
+ * 一根细丝所能扮演的四种身份。
  *
- * A role is decided from the instance index against four live counts, which is
- * what lets one instanced strip draw the whole trap: the whip that plants it,
- * the pillar in the middle, the tendrils crawling out to the boundary and the
- * arcs running around it are four *parametric paths*, not four meshes. Two draw
- * calls cover all of them however many filaments are in the air, and setting a
- * count to zero retires that role outright — which is how the leash disappears
- * the instant the trap snaps open.
+ * 角色由实例索引对四个实时计数比较得出，正是这一点让一条实例化条带就能画出
+ * 整个陷阱：将它种入地面的鞭索、中央的柱体、向外爬到边界的触须，以及绕边界
+ * 奔跑的弧线，是四条*参数化路径*，而不是四个网格。无论空中有多少细丝，两次
+ * draw call 就覆盖全部，而把某个计数设为零即彻底注销该角色——这正是陷阱炸开
+ * 的一瞬间牵引索消失的方式。
  */
 export const SnareRole = Object.freeze({
-  LEASH: 0,
-  COLUMN: 1,
-  TENDRIL: 2,
-  RIM: 3
+    LEASH: 0,
+    COLUMN: 1,
+    TENDRIL: 2,
+    RIM: 3,
 });
 
 /**
- * The whole cage lives in this vertex shader.
+ * 整个笼子都活在顶点着色器里。
  *
- * A vertex arrives as `(t, side)` — how far along its filament it is and which
- * edge of the ribbon it is on — and leaves as a world position. Nothing about
- * any path exists on the CPU, so there is no record to go stale: dragging
- * `zoneRadius` re-scales a trap that is already standing, dragging `height`
- * re-grows the pillar, and both do it with the clock stopped.
+ * 一个顶点以 `(t, side)` 的形式进来——它在自己那根细丝上的位置，以及它位于
+ * 缎带的哪一侧——并以一个世界坐标离开。任何路径都不存在于 CPU 上，因此没有
+ * 会过期的记录：拖动 `zoneRadius` 会重新缩放一个已经立在那里的陷阱，拖动
+ * `height` 会重新生长柱体，而两者都是在时钟停住的情况下完成的。
  *
- * Three things stack, as they do on the bolt:
+ * 有三样东西叠加在一起，与闪电（bolt）上的做法相同：
  *
- *   1. **the path** — the role's own centreline. A sagging line for the leash,
- *      a twisting climb for the column, a meander running outward for a
- *      tendril, an arc travelling around the circle for the rim. This is the
- *      only part that knows the trap's geometry.
- *   2. **the frame** — a tangent by finite difference on that path, and two
- *      normals off it. Every offset below lives in this frame, which is what
- *      lets one kink function serve a vertical pillar and a filament crawling
- *      flat across the floor.
- *   3. **the kinks** — octaves of *linearly* interpolated value noise. Linear
- *      on purpose: smoothstep would round the corners off, and the corners are
- *      the entire reason it reads as lightning rather than as a wobbly tube.
+ *   1. **路径**——角色自己的中心线。牵引索是一条下垂的线，柱体是一段扭转的
+ *      攀升，触须是一条向外跑去的蜿蜒，边环则是绕圆周行进的弧。这是唯一
+ *      知道陷阱几何的部分。
+ *   2. **坐标架**——对那条路径做有限差分得到的切线，以及由它得到的两个
+ *      法线。下面所有偏移都活在这个坐标架里，正是这一点让同一个 kink 函数
+ *      既能服务竖直的柱子，也能服务平贴地面爬行的细丝。
+ *   3. **扭结（kinks）**——*线性*插值的 value noise 的若干倍频。刻意用线性：
+ *      smoothstep 会把棱角磨圆，而这些棱角正是它读起来像闪电、而不是像一根
+ *      软管晃动的全部原因。
  *
- * The two ground-hugging roles damp the vertical component of that offset and
- * clamp their result above the floor, because a kink with a free y is a
- * filament that spends half its length buried.
+ * 两个贴地角色会压制该偏移的竖直分量，并把结果钳在地面之上，因为一个 y 自由
+ * 的扭结，会让一根细丝有一半长度埋在地下。
  */
 const CAGE_VERTEX = /* glsl */ `
   #define PI  3.141592653589793
   #define TAU 6.283185307179586
 
   uniform float uTime;
-  uniform vec3  uCentre;      // the trap's point on the floor
-  uniform vec3  uHand;        // where the leash leaves the caster
-  uniform vec3  uFront;       // the leash's travelling tip
-  uniform float uRadius;      // footprint, metres — already eased by the snap
-  uniform float uHeight;      // column height, metres
+  uniform vec3  uCentre;      // 陷阱在地面上的落点
+  uniform vec3  uHand;        // 牵引索离开施法者的位置
+  uniform vec3  uFront;       // 牵引索行进中的前端
+  uniform float uRadius;      // 占地半径，单位米——已由炸开过程缓动过
+  uniform float uHeight;      // 柱体高度，单位米
   uniform float uSeed;
   uniform float uRestrike;
   uniform float uFade;
@@ -137,7 +130,7 @@ const CAGE_VERTEX = /* glsl */ `
 
   ${noiseGLSL}
 
-  /** Value noise with a *linear* ramp — piecewise-linear output, sharp corners. */
+  /** *线性*斜坡的 value noise——输出为分段线性，棱角分明。 */
   float vnoise(float x, float seed) {
     float i = floor(x);
     float f = x - i;
@@ -145,9 +138,9 @@ const CAGE_VERTEX = /* glsl */ `
   }
 
   /**
-   * Offset of one filament from its path, in the perpendicular plane.
-   * span is the length of that path, so uJitterScale stays kinks per *metre*
-   * whether the filament is a 20 m whip or a 1 m hop around the rim.
+   * 一根细丝在垂直平面内相对其路径的偏移。
+   * span 是那条路径的长度，因此无论这根细丝是 20 米长的鞭索，还是沿边环 1 米
+   * 的一跳，uJitterScale 始终保持为每*米*的扭结数。
    */
   vec2 kink(float t, float seed, float span) {
     vec2 o = vec2(0.0);
@@ -155,8 +148,8 @@ const CAGE_VERTEX = /* glsl */ `
     float freq = max(uJitterScale, 0.01) * span;
     float scroll = uTime * uCrawl;
 
-    // Fixed trip count with a per-octave gate: a dynamic bound is not portable,
-    // and five multiply-adds are cheaper than the branch would be anyway.
+    // 固定的循环次数加逐倍频开关：动态上界不可移植，
+    // 而且五次乘加无论如何也比那个分支更便宜。
     for (int i = 0; i < 5; i++) {
       float on = step(float(i), uOctaves - 1.0);
       o.x += on * amp * vnoise(t * freq + scroll, seed + 13.0 * float(i));
@@ -168,20 +161,20 @@ const CAGE_VERTEX = /* glsl */ `
     return o;
   }
 
-  /** The role's centreline at t, before any kink is added. */
+  /** 该角色在 t 处的中心线，尚未加入任何扭结。 */
   vec3 pathAt(float role, float f, float seed, float t) {
     if (role < 0.5) {
-      /* ---- the leash: a line from the hand to the travelling tip ---- */
+      /* ---- 牵引索：从手部到行进前端的一条线 ---- */
       vec3 p = mix(uHand, uFront, t);
       p.y += uLeashSag * sin(t * PI);
-      // Negative sag drops the whip onto the floor, which is where a whip
-      // thrown at the ground belongs — but not through it.
+      // 负的下垂量会把鞭索压到地面上，而这正是抽向地面的鞭索该待的地方
+      // ——但不是穿过去。
       p.y = max(p.y, uLeashCling);
       return p;
     }
 
     if (role < 1.5) {
-      /* ---- the column: a twisting climb out of the middle ---- */
+      /* ---- 柱体：从中央扭转地攀升而出 ---- */
       float a = f * TAU + (t * uColumnTwist + uTime * uColumnSpin) * TAU;
       float r = uRadius * (mix(uThroat, uColumnSpread, pow(t, max(uColumnCurve, 0.01)))
                            + uColumnFlare * smoothstep(0.72, 1.0, t));
@@ -191,10 +184,9 @@ const CAGE_VERTEX = /* glsl */ `
     }
 
     if (role < 2.5) {
-      /* ---- a tendril: a meander running out to the boundary ---- */
-      // The veer is a per-filament constant rather than noise so the tendril
-      // curves *consistently*, the way a discharge that has committed to a
-      // direction does; the kinks on top of it supply the rest.
+      /* ---- 触须：一条向边界蜿蜒而去的曲线 ---- */
+      // 偏向量是逐细丝的常量而非噪声，这样触须才会*始终一致*地弯曲，
+      // 就像一次已经选定方向的放电；叠在它上面的扭结负责其余的部分。
       float veer = (hash11(seed + 5.0) - 0.5) * 2.0 * uTendrilWander;
       float a = f * TAU + uTime * uTendrilSpin * TAU + hash11(seed) * 0.4 + veer * pow(t, 1.4);
       float r = uRadius * mix(uTendrilInner, uTendrilReach, pow(t, max(uTendrilCurve, 0.01)));
@@ -203,7 +195,7 @@ const CAGE_VERTEX = /* glsl */ `
       return p;
     }
 
-    /* ---- a rim arc: current hopping around the boundary ---- */
+    /* ---- 边环弧：电流沿着边界跳跃 ---- */
     float a = (f + uTime * uRimSpeed) * TAU + hash11(seed) * 0.3 + t * uRimSpan * TAU;
     float r = uRadius * (1.0 + uRimJitter * 0.25 * sin(t * 6.0 + seed));
     vec3 p = uCentre + vec3(cos(a), 0.0, sin(a)) * r;
@@ -217,7 +209,7 @@ const CAGE_VERTEX = /* glsl */ `
     vT = t;
     vSide = side;
 
-    /* ---- which role is this filament wearing ---- */
+    /* ---- 这根细丝扮演的是哪个角色 ---- */
     float b1 = uCountLeash;
     float b2 = b1 + uCountColumn;
     float b3 = b2 + uCountTendril;
@@ -232,16 +224,16 @@ const CAGE_VERTEX = /* glsl */ `
     } else if (aStrand >= b1) {
       role = 1.0; local = aStrand - b1; count = max(uCountColumn, 1.0);
     }
-    // Open interval on purpose: 0 and 1 would put two filaments on the same
-    // bearing for the roles that fan around a circle.
+    // 刻意用开区间：对于绕圆展开的那些角色，0 和 1 会把两根细丝放在同一个
+    // 方位角上。
     float f = local / count;
 
-    // The strike index snaps every filament onto a new shape uRestrike times a
-    // second; the crawl inside kink() slides it continuously in between.
+    // 打击索引每秒 uRestrike 次把每根细丝弹到新的形状上；kink() 内部的
+    // 爬行则在两次之间让它连续滑动。
     float strike = floor(uTime * max(uRestrike, 0.01));
     float seed = hash11(aStrand * 7.13 + uSeed + strike * 3.77) * 97.0;
 
-    /* ---- per-role constants ---- */
+    /* ---- 逐角色的常量 ---- */
     float amp = uLeashKink;
     float widthMul = uLeashWidth;
     float span = max(length(uFront - uHand), 0.01);
@@ -258,7 +250,7 @@ const CAGE_VERTEX = /* glsl */ `
     }
     vDim = dim;
 
-    /* ---- the frame the offsets live in ---- */
+    /* ---- 偏移所在的坐标架 ---- */
     float step_ = 0.02;
     vec3 here = pathAt(role, f, seed, t);
     vec3 behind = pathAt(role, f, seed, max(t - step_, 0.0));
@@ -266,13 +258,13 @@ const CAGE_VERTEX = /* glsl */ `
 
     vec3 tangent = ahead - behind;
     tangent = length(tangent) > 1e-5 ? normalize(tangent) : vec3(0.0, 1.0, 0.0);
-    // The column runs vertically, so the usual world-up reference degenerates
-    // on exactly the role that needs the frame most.
+    // 柱体是竖直走向的，因此常用的世界向上参考方向，恰恰会在最需要这个
+    // 坐标架的那个角色上退化。
     vec3 upRef = abs(tangent.y) > 0.9 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
     vec3 n1 = normalize(cross(tangent, upRef));
     vec3 n2 = normalize(cross(tangent, n1));
 
-    /* ---- the kinks, and the fan that separates the whip's filaments ---- */
+    /* ---- 扭结，以及把鞭索各细丝分开的那把扇子 ---- */
     float pinch = max(uPinch, 1e-3);
     float ends = smoothstep(0.0, pinch, t) * smoothstep(0.0, pinch, 1.0 - t);
 
@@ -283,8 +275,8 @@ const CAGE_VERTEX = /* glsl */ `
     }
 
     vec3 offset = n1 * k.x + n2 * k.y;
-    // Ground roles keep their kinks in the floor plane. A free y here buries
-    // half of every tendril and the effect reads as a broken dotted line.
+    // 地面角色把扭结限制在地面平面内。这里若让 y 自由，每条触须都会有一半
+    // 被埋掉，效果读起来就成了一条断断续续的虚线。
     if (role > 1.5) offset.y *= 0.3;
 
     vec3 world = here + offset;
@@ -294,7 +286,7 @@ const CAGE_VERTEX = /* glsl */ `
       nextWorld.y = max(nextWorld.y, uTendrilHug * 0.4);
     }
 
-    /* ---- turn the ribbon to face the camera ---- */
+    /* ---- 让缎带转向摄像机 ---- */
     vec3 tan2 = nextWorld - world;
     tan2 = length(tan2) > 1e-5 ? normalize(tan2) : tangent;
     vec3 toCamera = normalize(cameraPosition - world);
@@ -302,20 +294,20 @@ const CAGE_VERTEX = /* glsl */ `
     float bl = length(binormal);
     binormal = bl > 1e-4 ? binormal / bl : n1;
 
-    /* ---- width ---- */
-    // A stuttering per-filament blink, quantised to uFlickerSpeed so the whole
-    // cage strobes on one clock instead of shimmering independently.
+    /* ---- 宽度 ---- */
+    // 逐细丝的断续闪烁，量化到 uFlickerSpeed，好让整个笼子按同一个时钟
+    // 频闪，而不是各自独立地闪光。
     float flash = mix(1.0, hash11(floor(uTime * uFlickerSpeed) + aStrand * 3.7 + uSeed), uStrandFlash);
     vFlash = flash;
 
     float halfWidth = uWidth * uWidthScale * widthMul;
-    // Every filament is an arc with two loose ends, so it tapers at both.
+    // 每根细丝都是一条两端松开的弧，因此两端都会收细。
     halfWidth *= mix(1.0, pow(sin(clamp(t, 0.0, 1.0) * PI), 0.35), 0.85);
     if (role > 0.5 && role < 1.5) halfWidth *= mix(1.0, uColumnTaper, t);
     halfWidth *= flash * uFade;
 
-    // World space throughout: the ability's group is an identity transform, and
-    // going through modelMatrix would only invite it to drift.
+    // 全程使用世界空间：技能所在的 group 是单位变换，
+    // 走 modelMatrix 只会让它有机会漂移。
     vec4 mv = viewMatrix * vec4(world + binormal * side * halfWidth, 1.0);
     vViewZ = mv.z;
     gl_Position = projectionMatrix * mv;
@@ -370,12 +362,12 @@ const CAGE_FRAGMENT = /* glsl */ `
       float alpha = profile;
     #endif
 
-    // Quantised, not sinusoidal: real lightning stutters between brightnesses,
-    // it does not breathe.
+    // 量化而非正弦：真实的闪电是在不同亮度之间卡顿跳动，
+    // 而不是像呼吸一样起伏。
     float flicker = 1.0 - uFlicker * hash11(floor(uTime * uFlickerSpeed) + uSeed);
 
-    // The loose ends fade as well as thin. A ribbon that only narrows leaves a
-    // hard dot at each tip, and every filament here has two of them.
+    // 松开的端头既要收细也要淡出。只收窄的缎带会在每个尖端留下一个硬点，
+    // 而这里每根细丝都有两个端头。
     alpha *= pow(sin(clamp(vT, 0.0, 1.0) * PI), 0.35);
     alpha *= flicker * vFlash * vDim * uFade * uPassOpacity * uOpacity;
 
@@ -389,201 +381,201 @@ const CAGE_FRAGMENT = /* glsl */ `
 `;
 
 /**
- * One pass of the cage.
+ * 笼子的一个 pass。
  *
- * Both passes share every uniform except the two that define the pass itself
- * (`uWidthScale`, `uPassOpacity`), so `userData.sync()` can be handed the same
- * state for each and the editor drives them together.
+ * 两个 pass 共用除定义自身的那两个（`uWidthScale`、`uPassOpacity`）之外的
+ * 全部 uniform，因此 `userData.sync()` 可以给两者传入同一份状态，编辑器也就
+ * 把它们一并驱动。
  *
  * @param {number} pass SnarePass.*
  */
 export function createSnareCageMaterial(pass = SnarePass.CORE) {
-  const glow = pass === SnarePass.GLOW;
+    const glow = pass === SnarePass.GLOW;
 
-  const material = new ShaderMaterial({
-    defines: glow ? { CAGE_GLOW: '' } : {},
-    transparent: true,
-    depthWrite: false,
-    depthTest: true,
-    blending: AdditiveBlending,
-    side: DoubleSide,
-    toneMapped: false,
-    uniforms: sharedUniforms({
-      uCentre: { value: new Vector3() },
-      uHand: { value: new Vector3() },
-      uFront: { value: new Vector3(0, 0, 1) },
-      uRadius: { value: 4.4 },
-      uHeight: { value: 6.2 },
-      uSeed: { value: 0 },
-      uRestrike: { value: 21 },
-      uFade: { value: 1 },
+    const material = new ShaderMaterial({
+        defines: glow ? { CAGE_GLOW: '' } : {},
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: AdditiveBlending,
+        side: DoubleSide,
+        toneMapped: false,
+        uniforms: sharedUniforms({
+            uCentre: { value: new Vector3() },
+            uHand: { value: new Vector3() },
+            uFront: { value: new Vector3(0, 0, 1) },
+            uRadius: { value: 4.4 },
+            uHeight: { value: 6.2 },
+            uSeed: { value: 0 },
+            uRestrike: { value: 21 },
+            uFade: { value: 1 },
 
-      uCountLeash: { value: 3 },
-      uCountColumn: { value: 8 },
-      uCountTendril: { value: 12 },
-      uCountRim: { value: 7 },
+            uCountLeash: { value: 3 },
+            uCountColumn: { value: 8 },
+            uCountTendril: { value: 12 },
+            uCountRim: { value: 7 },
 
-      uLeashSag: { value: -0.35 },
-      uLeashSpread: { value: 0.22 },
-      uLeashCling: { value: 0.12 },
-      uLeashKink: { value: 0.3 },
-      uLeashWidth: { value: 1 },
+            uLeashSag: { value: -0.35 },
+            uLeashSpread: { value: 0.22 },
+            uLeashCling: { value: 0.12 },
+            uLeashKink: { value: 0.3 },
+            uLeashWidth: { value: 1 },
 
-      uHeightCurve: { value: 0.85 },
-      uThroat: { value: 0.07 },
-      uColumnSpread: { value: 0.17 },
-      uColumnCurve: { value: 1.35 },
-      uColumnFlare: { value: 0.12 },
-      uColumnTwist: { value: 0.55 },
-      uColumnSpin: { value: 0.4 },
-      uColumnKink: { value: 0.24 },
-      uColumnWidth: { value: 1.6 },
-      uColumnTaper: { value: 0.55 },
+            uHeightCurve: { value: 0.85 },
+            uThroat: { value: 0.07 },
+            uColumnSpread: { value: 0.17 },
+            uColumnCurve: { value: 1.35 },
+            uColumnFlare: { value: 0.12 },
+            uColumnTwist: { value: 0.55 },
+            uColumnSpin: { value: 0.4 },
+            uColumnKink: { value: 0.24 },
+            uColumnWidth: { value: 1.6 },
+            uColumnTaper: { value: 0.55 },
 
-      uTendrilInner: { value: 0.06 },
-      uTendrilReach: { value: 1 },
-      uTendrilCurve: { value: 0.8 },
-      uTendrilWander: { value: 0.9 },
-      uTendrilArch: { value: 0.22 },
-      uTendrilHug: { value: 0.05 },
-      uTendrilSpin: { value: 0.05 },
-      uTendrilKink: { value: 0.18 },
-      uTendrilWidth: { value: 0.75 },
-      uTendrilDim: { value: 0.8 },
+            uTendrilInner: { value: 0.06 },
+            uTendrilReach: { value: 1 },
+            uTendrilCurve: { value: 0.8 },
+            uTendrilWander: { value: 0.9 },
+            uTendrilArch: { value: 0.22 },
+            uTendrilHug: { value: 0.05 },
+            uTendrilSpin: { value: 0.05 },
+            uTendrilKink: { value: 0.18 },
+            uTendrilWidth: { value: 0.75 },
+            uTendrilDim: { value: 0.8 },
 
-      uRimSpan: { value: 0.19 },
-      uRimSpeed: { value: 0.28 },
-      uRimHeight: { value: 0.35 },
-      uRimJitter: { value: 0.16 },
-      uRimKink: { value: 0.12 },
-      uRimWidth: { value: 0.7 },
-      uRimDim: { value: 0.9 },
+            uRimSpan: { value: 0.19 },
+            uRimSpeed: { value: 0.28 },
+            uRimHeight: { value: 0.35 },
+            uRimJitter: { value: 0.16 },
+            uRimKink: { value: 0.12 },
+            uRimWidth: { value: 0.7 },
+            uRimDim: { value: 0.9 },
 
-      uJitter: { value: 1 },
-      uJitterScale: { value: 1.4 },
-      uOctaves: { value: 4 },
-      uJitterFalloff: { value: 0.55 },
-      uCrawl: { value: 2.4 },
-      uPinch: { value: 0.16 },
+            uJitter: { value: 1 },
+            uJitterScale: { value: 1.4 },
+            uOctaves: { value: 4 },
+            uJitterFalloff: { value: 0.55 },
+            uCrawl: { value: 2.4 },
+            uPinch: { value: 0.16 },
 
-      uWidth: { value: 0.032 },
-      uWidthScale: { value: glow ? 6.2 : 1 },
-      uPassOpacity: { value: glow ? 0.44 : 1 },
-      uStrandFlash: { value: 0.45 },
-      uFlickerSpeed: { value: 30 },
-      uFlicker: { value: 0.26 },
-      uCoreSharp: { value: 4.4 },
-      uGlowFalloff: { value: 2.3 },
-      uSoftFade: { value: 0.7 },
+            uWidth: { value: 0.032 },
+            uWidthScale: { value: glow ? 6.2 : 1 },
+            uPassOpacity: { value: glow ? 0.44 : 1 },
+            uStrandFlash: { value: 0.45 },
+            uFlickerSpeed: { value: 30 },
+            uFlicker: { value: 0.26 },
+            uCoreSharp: { value: 4.4 },
+            uGlowFalloff: { value: 2.3 },
+            uSoftFade: { value: 0.7 },
 
-      uOpacity: { value: 1 },
-      uGlow: { value: 2.2 },
-      uColorCore: { value: new Color(1, 1, 1) },
-      uColorInner: { value: new Color(0.86, 0.82, 1) },
-      uColorOuter: { value: new Color(0.56, 0.42, 1) },
-      uColorHalo: { value: new Color(0.16, 0.05, 0.55) }
-    }),
-    vertexShader: CAGE_VERTEX,
-    fragmentShader: CAGE_FRAGMENT
-  });
+            uOpacity: { value: 1 },
+            uGlow: { value: 2.2 },
+            uColorCore: { value: new Color(1, 1, 1) },
+            uColorInner: { value: new Color(0.86, 0.82, 1) },
+            uColorOuter: { value: new Color(0.56, 0.42, 1) },
+            uColorHalo: { value: new Color(0.16, 0.05, 0.55) },
+        }),
+        vertexShader: CAGE_VERTEX,
+        fragmentShader: CAGE_FRAGMENT,
+    });
 
-  /**
-   * Push the live settings and the current cast state into the uniforms.
-   *
-   * Called every frame — including on a zero-length frame while the sandbox is
-   * paused, which is what keeps every control below a live slider.
-   *
-   * @param {object} state
-   *   { centre, hand, front, radius, height, fade, seed, counts }
-   */
-  material.userData.sync = (state) => {
-    const c = settings.snare;
-    const g = settings.global;
-    const u = material.uniforms;
+    /**
+     * 把实时设置与当前的施放状态推入 uniform。
+     *
+     * 每帧调用——包括沙盒暂停时的零长度帧，正是这一点让下面每个控件都是一个
+     * 实时的滑杆。
+     *
+     * @param {object} state
+     *   { centre, hand, front, radius, height, fade, seed, counts }
+     */
+    material.userData.sync = (state) => {
+        const c = settings.snare;
+        const g = settings.global;
+        const u = material.uniforms;
 
-    u.uCentre.value.copy(state.centre);
-    u.uHand.value.copy(state.hand);
-    u.uFront.value.copy(state.front);
-    u.uRadius.value = state.radius;
-    u.uHeight.value = state.height;
-    u.uSeed.value = state.seed;
-    u.uFade.value = state.fade;
+        u.uCentre.value.copy(state.centre);
+        u.uHand.value.copy(state.hand);
+        u.uFront.value.copy(state.front);
+        u.uRadius.value = state.radius;
+        u.uHeight.value = state.height;
+        u.uSeed.value = state.seed;
+        u.uFade.value = state.fade;
 
-    u.uCountLeash.value = state.counts.leash;
-    u.uCountColumn.value = state.counts.column;
-    u.uCountTendril.value = state.counts.tendril;
-    u.uCountRim.value = state.counts.rim;
+        u.uCountLeash.value = state.counts.leash;
+        u.uCountColumn.value = state.counts.column;
+        u.uCountTendril.value = state.counts.tendril;
+        u.uCountRim.value = state.counts.rim;
 
-    u.uRestrike.value = c.restrike;
+        u.uRestrike.value = c.restrike;
 
-    u.uLeashSag.value = c.leashSag;
-    u.uLeashSpread.value = c.leashSpread;
-    u.uLeashCling.value = c.leashCling;
-    u.uLeashKink.value = c.leashKink;
-    u.uLeashWidth.value = c.leashWidth;
+        u.uLeashSag.value = c.leashSag;
+        u.uLeashSpread.value = c.leashSpread;
+        u.uLeashCling.value = c.leashCling;
+        u.uLeashKink.value = c.leashKink;
+        u.uLeashWidth.value = c.leashWidth;
 
-    u.uHeightCurve.value = c.heightCurve;
-    u.uThroat.value = c.throat;
-    u.uColumnSpread.value = c.columnSpread;
-    u.uColumnCurve.value = c.columnCurve;
-    u.uColumnFlare.value = c.columnFlare;
-    u.uColumnTwist.value = c.columnTwist;
-    u.uColumnSpin.value = c.columnSpin;
-    u.uColumnKink.value = c.columnKink;
-    u.uColumnWidth.value = c.columnWidth;
-    u.uColumnTaper.value = c.columnTaper;
+        u.uHeightCurve.value = c.heightCurve;
+        u.uThroat.value = c.throat;
+        u.uColumnSpread.value = c.columnSpread;
+        u.uColumnCurve.value = c.columnCurve;
+        u.uColumnFlare.value = c.columnFlare;
+        u.uColumnTwist.value = c.columnTwist;
+        u.uColumnSpin.value = c.columnSpin;
+        u.uColumnKink.value = c.columnKink;
+        u.uColumnWidth.value = c.columnWidth;
+        u.uColumnTaper.value = c.columnTaper;
 
-    u.uTendrilInner.value = c.tendrilInner;
-    u.uTendrilReach.value = c.tendrilReach;
-    u.uTendrilCurve.value = c.tendrilCurve;
-    u.uTendrilWander.value = c.tendrilWander;
-    u.uTendrilArch.value = c.tendrilArch;
-    u.uTendrilHug.value = c.tendrilHug;
-    u.uTendrilSpin.value = c.tendrilSpin;
-    u.uTendrilKink.value = c.tendrilKink;
-    u.uTendrilWidth.value = c.tendrilWidth;
-    u.uTendrilDim.value = c.tendrilDim;
+        u.uTendrilInner.value = c.tendrilInner;
+        u.uTendrilReach.value = c.tendrilReach;
+        u.uTendrilCurve.value = c.tendrilCurve;
+        u.uTendrilWander.value = c.tendrilWander;
+        u.uTendrilArch.value = c.tendrilArch;
+        u.uTendrilHug.value = c.tendrilHug;
+        u.uTendrilSpin.value = c.tendrilSpin;
+        u.uTendrilKink.value = c.tendrilKink;
+        u.uTendrilWidth.value = c.tendrilWidth;
+        u.uTendrilDim.value = c.tendrilDim;
 
-    u.uRimSpan.value = c.rimSpan;
-    u.uRimSpeed.value = c.rimSpeed;
-    u.uRimHeight.value = c.rimHeight;
-    u.uRimJitter.value = c.rimJitter;
-    u.uRimKink.value = c.rimKink;
-    u.uRimWidth.value = c.rimWidth;
-    u.uRimDim.value = c.rimDim;
+        u.uRimSpan.value = c.rimSpan;
+        u.uRimSpeed.value = c.rimSpeed;
+        u.uRimHeight.value = c.rimHeight;
+        u.uRimJitter.value = c.rimJitter;
+        u.uRimKink.value = c.rimKink;
+        u.uRimWidth.value = c.rimWidth;
+        u.uRimDim.value = c.rimDim;
 
-    // The kinks are the one place `global.randomness` and the noise multipliers
-    // have anything to bite on, so they scale here rather than everywhere.
-    u.uJitter.value = c.jitter * g.randomness * g.noiseStrength;
-    u.uJitterScale.value = c.jitterScale * g.noiseFrequency;
-    u.uOctaves.value = Math.round(c.octaves);
-    u.uJitterFalloff.value = c.jitterFalloff;
-    u.uCrawl.value = c.crawl * g.noiseSpeed;
-    u.uPinch.value = c.pinch;
+        // 扭结是 `global.randomness` 与噪声乘数唯一能起作用的地方，
+        // 所以只在这里缩放，而不是到处都缩放。
+        u.uJitter.value = c.jitter * g.randomness * g.noiseStrength;
+        u.uJitterScale.value = c.jitterScale * g.noiseFrequency;
+        u.uOctaves.value = Math.round(c.octaves);
+        u.uJitterFalloff.value = c.jitterFalloff;
+        u.uCrawl.value = c.crawl * g.noiseSpeed;
+        u.uPinch.value = c.pinch;
 
-    u.uWidth.value = c.width;
-    u.uWidthScale.value = glow ? c.glowWidth : 1;
-    u.uPassOpacity.value = glow ? c.glowOpacity : 1;
-    u.uStrandFlash.value = c.strandFlash;
-    u.uFlickerSpeed.value = c.flickerSpeed;
-    u.uFlicker.value = c.flicker;
-    u.uCoreSharp.value = c.coreSharp;
-    u.uGlowFalloff.value = c.glowFalloff;
-    u.uSoftFade.value = c.softFade;
+        u.uWidth.value = c.width;
+        u.uWidthScale.value = glow ? c.glowWidth : 1;
+        u.uPassOpacity.value = glow ? c.glowOpacity : 1;
+        u.uStrandFlash.value = c.strandFlash;
+        u.uFlickerSpeed.value = c.flickerSpeed;
+        u.uFlicker.value = c.flicker;
+        u.uCoreSharp.value = c.coreSharp;
+        u.uGlowFalloff.value = c.glowFalloff;
+        u.uSoftFade.value = c.softFade;
 
-    u.uOpacity.value = c.opacity * g.opacity;
-    u.uGlow.value = c.glow;
-    u.uColorCore.value.copy(getColor(c.colorCore));
-    u.uColorInner.value.copy(getColor(c.colorInner));
-    u.uColorOuter.value.copy(getColor(c.colorOuter));
-    u.uColorHalo.value.copy(getColor(c.colorHalo));
-  };
+        u.uOpacity.value = c.opacity * g.opacity;
+        u.uGlow.value = c.glow;
+        u.uColorCore.value.copy(getColor(c.colorCore));
+        u.uColorInner.value.copy(getColor(c.colorInner));
+        u.uColorOuter.value.copy(getColor(c.colorOuter));
+        u.uColorHalo.value.copy(getColor(c.colorHalo));
+    };
 
-  return material;
+    return material;
 }
 
 /* ==================================================================== */
-/* The field burnt into the floor                                        */
+/* 烧进地面的场                                                          */
 /* ==================================================================== */
 
 const FIELD_VERTEX = /* glsl */ `
@@ -595,17 +587,16 @@ const FIELD_VERTEX = /* glsl */ `
 `;
 
 /**
- * The circle the indicator promised, burnt into the floor.
+ * 指示器所承诺的那个圆，被烧进了地面。
  *
- * Same signed-distance construction as the aim circle and the same thick band,
- * because that correspondence *is* the effect: what you measured out before you
- * clicked is what is now standing on the ground. What it does not share is the
- * treatment — the interior is charred and veined rather than washed, the ring
- * is a burn rather than a line, and everything in it crawls.
+ * 与瞄准圈相同的符号距离构造，同样的粗环带，因为这种对应关系*就是*效果
+ * 本身：你点击之前量出来的范围，就是现在立在地面上的范围。它没有沿用的是
+ * 处理方式——内部是被烧焦并布满脉络的，而不是一层淡淡的水洗；圆环是一道
+ * 灼痕而不是一条线；而且里面的一切都在爬行。
  *
- * It is an ability-owned mesh rather than a pooled decal for one reason: a
- * decal captures its radius when it spawns, and this circle has to re-scale
- * under `zoneRadius` while it is still standing.
+ * 它是一个由技能自身持有的网格，而不是池化的贴花，只有这一个原因：贴花在
+ * 生成时就固定了半径，而这个圆必须在仍然立着的时候随 `zoneRadius` 重新
+ * 缩放。
  */
 const FIELD_FRAGMENT = /* glsl */ `
   uniform float uTime;
@@ -657,25 +648,24 @@ const FIELD_FRAGMENT = /* glsl */ `
     float interior = smoothstep(inner + aa, inner - aa, d);
     float radial = clamp(d / inner, 0.0, 1.0);
 
-    /* ---- the veins burnt across the disc ---- */
-    // Sampled in the *plane* and domain warped, never on atan(): an angular
-    // lookup hands every radius along a bearing the same value and draws
-    // dead-straight spokes out of the centre — a firework, not a burn.
+    /* ---- 烧过整个圆盘的脉络 ---- */
+    // 在*平面*上采样并做域扭曲，绝不用 atan()：角向查表会让同一方位上的每个
+    // 半径都拿到同一个值，并从中心画出死直的辐条——那是烟花，不是灼痕。
     float warp = fbm3(vec3(p * 0.5, uTime * 0.2 + uSeed)) * uWarp;
     float fil = ridged(vec3(p * uVeinScale + warp, uSeed * 11.0 + uTime * uCrawl), 4);
     float veins = smoothstep(mix(0.55, 0.86, uVeinSharp), 0.98, fil) * interior * uVeins;
 
-    /* ---- pressure rings running out of the middle ---- */
+    /* ---- 从中央向外跑出的压力环 ---- */
     float ring = 0.5 + 0.5 * cos((radial * uRings - uTime * uRingSpeed) * TAU);
     ring = pow(ring, 8.0) * interior;
 
-    /* ---- ticks stepping around the boundary ---- */
+    /* ---- 绕边界步进的刻度 ---- */
     float ang = atan(p.y, p.x) / TAU + 0.5;
     float spokePhase = fract(ang * uSpokes + uTime * uSpin * uSpokes);
     float spoke = 1.0 - smoothstep(0.22, 0.3, spokePhase);
     spoke *= smoothstep(inner - uSpokeLength, inner, d) * smoothstep(outer, inner, d);
 
-    /* ---- the pool the column stands in ---- */
+    /* ---- 柱体所站立的那滩光 ---- */
     float core = smoothstep(uCoreSize * uRadius, 0.0, d) * uCore;
 
     float breathe = 1.0 + uPulse * sin(uTime * uPulseSpeed * TAU);
@@ -692,83 +682,82 @@ const FIELD_FRAGMENT = /* glsl */ `
 `;
 
 /**
- * The ground field. One quad, re-sized and re-shaded from `settings.snare`
- * every frame.
+ * 地面场。单个 quad，每帧依据 `settings.snare` 重新调整尺寸并重新着色。
  */
 export function createSnareFieldMaterial() {
-  const material = new ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    depthTest: true,
-    blending: AdditiveBlending,
-    side: DoubleSide,
-    toneMapped: false,
-    uniforms: sharedUniforms({
-      uQuadSize: { value: 12 },
-      uRadius: { value: 4.4 },
-      uBoundary: { value: 0.4 },
-      uBoundaryGlow: { value: 2.6 },
-      uFill: { value: 0.3 },
-      uFalloff: { value: 1.7 },
-      uVeins: { value: 1 },
-      uVeinScale: { value: 1.5 },
-      uVeinSharp: { value: 0.72 },
-      uWarp: { value: 0.55 },
-      uCrawl: { value: 0.5 },
-      uRings: { value: 2.4 },
-      uRingSpeed: { value: 0.8 },
-      uSpokes: { value: 20 },
-      uSpokeLength: { value: 0.5 },
-      uSpin: { value: 0.05 },
-      uCore: { value: 1.3 },
-      uCoreSize: { value: 0.22 },
-      uPulse: { value: 0.3 },
-      uPulseSpeed: { value: 3.4 },
-      uSeed: { value: 0 },
-      uFade: { value: 1 },
-      uOpacity: { value: 1 },
-      uColorField: { value: new Color(0.56, 0.42, 1) },
-      uColorEdge: { value: new Color(1, 1, 1) }
-    }),
-    vertexShader: FIELD_VERTEX,
-    fragmentShader: FIELD_FRAGMENT
-  });
+    const material = new ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: AdditiveBlending,
+        side: DoubleSide,
+        toneMapped: false,
+        uniforms: sharedUniforms({
+            uQuadSize: { value: 12 },
+            uRadius: { value: 4.4 },
+            uBoundary: { value: 0.4 },
+            uBoundaryGlow: { value: 2.6 },
+            uFill: { value: 0.3 },
+            uFalloff: { value: 1.7 },
+            uVeins: { value: 1 },
+            uVeinScale: { value: 1.5 },
+            uVeinSharp: { value: 0.72 },
+            uWarp: { value: 0.55 },
+            uCrawl: { value: 0.5 },
+            uRings: { value: 2.4 },
+            uRingSpeed: { value: 0.8 },
+            uSpokes: { value: 20 },
+            uSpokeLength: { value: 0.5 },
+            uSpin: { value: 0.05 },
+            uCore: { value: 1.3 },
+            uCoreSize: { value: 0.22 },
+            uPulse: { value: 0.3 },
+            uPulseSpeed: { value: 3.4 },
+            uSeed: { value: 0 },
+            uFade: { value: 1 },
+            uOpacity: { value: 1 },
+            uColorField: { value: new Color(0.56, 0.42, 1) },
+            uColorEdge: { value: new Color(1, 1, 1) },
+        }),
+        vertexShader: FIELD_VERTEX,
+        fragmentShader: FIELD_FRAGMENT,
+    });
 
-  /**
-   * @param {object} state { radius, quadSize, fade, seed }
-   */
-  material.userData.sync = (state) => {
-    const c = settings.snare;
-    const g = settings.global;
-    const u = material.uniforms;
+    /**
+     * @param {object} state { radius, quadSize, fade, seed }
+     */
+    material.userData.sync = (state) => {
+        const c = settings.snare;
+        const g = settings.global;
+        const u = material.uniforms;
 
-    u.uQuadSize.value = state.quadSize;
-    u.uRadius.value = state.radius;
-    u.uFade.value = state.fade;
-    u.uSeed.value = state.seed;
+        u.uQuadSize.value = state.quadSize;
+        u.uRadius.value = state.radius;
+        u.uFade.value = state.fade;
+        u.uSeed.value = state.seed;
 
-    u.uBoundary.value = c.fieldBoundary;
-    u.uBoundaryGlow.value = c.fieldBoundaryGlow;
-    u.uFill.value = c.fieldFill;
-    u.uFalloff.value = c.fieldFalloff;
-    u.uVeins.value = c.fieldVeins * g.shaderIntensity;
-    u.uVeinScale.value = c.fieldVeinScale * g.noiseFrequency;
-    u.uVeinSharp.value = c.fieldVeinSharp;
-    u.uWarp.value = c.fieldWarp * g.noiseStrength;
-    u.uCrawl.value = c.fieldCrawl * g.noiseSpeed;
-    u.uRings.value = c.fieldRings;
-    u.uRingSpeed.value = c.fieldRingSpeed;
-    u.uSpokes.value = Math.max(0, Math.round(c.fieldSpokes));
-    u.uSpokeLength.value = c.fieldSpokeLength;
-    u.uSpin.value = c.fieldSpin;
-    u.uCore.value = c.fieldCore;
-    u.uCoreSize.value = c.fieldCoreSize;
-    u.uPulse.value = c.fieldPulse;
-    u.uPulseSpeed.value = c.fieldPulseSpeed;
-    u.uOpacity.value = c.fieldOpacity * g.opacity;
-    u.uColorField.value.copy(getColor(c.colorField));
-    u.uColorEdge.value.copy(getColor(c.colorFieldEdge));
-  };
+        u.uBoundary.value = c.fieldBoundary;
+        u.uBoundaryGlow.value = c.fieldBoundaryGlow;
+        u.uFill.value = c.fieldFill;
+        u.uFalloff.value = c.fieldFalloff;
+        u.uVeins.value = c.fieldVeins * g.shaderIntensity;
+        u.uVeinScale.value = c.fieldVeinScale * g.noiseFrequency;
+        u.uVeinSharp.value = c.fieldVeinSharp;
+        u.uWarp.value = c.fieldWarp * g.noiseStrength;
+        u.uCrawl.value = c.fieldCrawl * g.noiseSpeed;
+        u.uRings.value = c.fieldRings;
+        u.uRingSpeed.value = c.fieldRingSpeed;
+        u.uSpokes.value = Math.max(0, Math.round(c.fieldSpokes));
+        u.uSpokeLength.value = c.fieldSpokeLength;
+        u.uSpin.value = c.fieldSpin;
+        u.uCore.value = c.fieldCore;
+        u.uCoreSize.value = c.fieldCoreSize;
+        u.uPulse.value = c.fieldPulse;
+        u.uPulseSpeed.value = c.fieldPulseSpeed;
+        u.uOpacity.value = c.fieldOpacity * g.opacity;
+        u.uColorField.value.copy(getColor(c.colorField));
+        u.uColorEdge.value.copy(getColor(c.colorFieldEdge));
+    };
 
-  return material;
+    return material;
 }

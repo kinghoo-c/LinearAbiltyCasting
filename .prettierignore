@@ -1,0 +1,18 @@
+# 依赖与构建产物
+node_modules
+dist
+
+# 锁文件（由 npm 管理，不参与格式化）
+package-lock.json
+
+# 二进制/资源目录：hdri、models、textures
+public
+
+# 历史归档代码（保留原样，不参与格式化）
+src/archive
+
+# 学习资料与预渲染的流程图产物（含 SVG，避免被重排）
+learning
+
+# 矢量图一律跳过
+*.svg
