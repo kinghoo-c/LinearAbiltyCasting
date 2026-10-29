@@ -26,7 +26,7 @@ export class CameraRig {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.075;
         this.controls.enablePan = false;
-        this.controls.enableZoom = false; // 改由滚轮驱动 `settings.camera.distance`
+        this.controls.enableZoom = true; // 改由滚轮驱动 `settings.camera.distance`
         this.controls.minPolarAngle = settings.camera.minPolar;
         this.controls.maxPolarAngle = settings.camera.maxPolar;
         this.controls.rotateSpeed = 0.65;

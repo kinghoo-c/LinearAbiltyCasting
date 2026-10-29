@@ -72,7 +72,7 @@ export class AssetLoader {
     loadFBX(url) {
         return new Promise((resolve, reject) => {
             this.fbx.load(
-                encodeURI(url),
+                url,
                 resolve,
                 (event) => {
                     if (event.lengthComputable) this._onProgress?.(event.loaded / event.total, url);
@@ -85,14 +85,14 @@ export class AssetLoader {
     /** @returns {Promise<THREE.Texture>} */
     loadTexture(url) {
         return new Promise((resolve, reject) => {
-            this.texture.load(encodeURI(url), resolve, undefined, reject);
+            this.texture.load(url, resolve, undefined, reject);
         });
     }
 
     /** @returns {Promise<THREE.DataTexture>} */
     loadHDR(url) {
         return new Promise((resolve, reject) => {
-            this.hdr.load(encodeURI(url), resolve, undefined, reject);
+            this.hdr.load(url, resolve, undefined, reject);
         });
     }
 }

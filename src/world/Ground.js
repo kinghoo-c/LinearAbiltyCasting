@@ -5,7 +5,7 @@ import { noiseGLSL } from '../shaders/lib/noise.glsl.js';
 import { LAYER } from '../core/Layers.js';
 
 /** 地板平面的边长（单位：米）——贴图的平铺重复次数由它推算。 */
-const PLANE_SIZE = 400;
+const PLANE_SIZE = 800;
 
 /**
  * 装饰地板的石材贴图：ambientCG Rock030（CC0 协议），粗糙的自然岩石
@@ -76,6 +76,35 @@ export class Ground {
             uTime: { value: 0 },
         };
 
+        /**
+         * 【详解】把地板的自定义着色器挂进这个内置材质。
+         *
+         * 为什么是这个入口：名字里的 "shadow caster" 是阴影系统换代留下的——
+         * 项目早期用 CSM（级联阴影）时，每个材质都必须显式注册，否则会静默
+         * 丢掉全部方向光；如今阴影换成 three 原生的方向光贴图，标准材质默认
+         * 就能接收太阳光，注册那一半已经空转（`registerShadowCaster` 就是同一个
+         * 接口的纯空实现，见 Environment）。这里真正剩下的只有"改写着色器"，
+         * 所以它等价于 patchOnBeforeCompile(material, patch)。
+         *
+         * 为什么不直接写 `material.onBeforeCompile = ...`：patchOnBeforeCompile
+         * 会先跑材质上已有的回调、再跑本补丁，是**串接**而不是覆盖，于是在同一
+         * 个内置材质上共存的多种改写（IceMaterial、MeteorMaterial、地板）谁也
+         * 不会把谁顶掉；日后阴影实现再变一次，调用方也不必跟着改。
+         *
+         * 何时执行：three 在材质每次编译着色器时调用它（对地板来说就是 App.load()
+         * 里那次 compileAsync 预热），传入组装好的 shader 对象。下面做两件事——
+         * 一是把本类的六个 uniform **按引用**挂进 shader.uniforms，所以 update()
+         * 每帧只改 `.value` 即可生效，永不触发重编译；二是把 GLSL 插进标准 chunk
+         * 的锚点：顶点阶段带出世界坐标 varying `vGroundWorld`，片元阶段在
+         * map_fragment 与 roughnessmap_fragment 之后接上石纹 / 调色 / 径向光池 /
+         * 斑块光泽。
+         *
+         * 注意：翻转 USE_MAP 宏（`settings.environment.floorTexture` 开关）会重新编译，这段补丁
+         * 于是会再执行一次——里面只是幂等的字符串替换与 uniform 挂载，重复执行
+         * 没有副作用。锚点是 three 内部的 chunk 名，升级 three 时要留意它们是否
+         * 还在（utils/shaderPatch.js 的 replaceChunk 会为这种情况告警，这里用的
+         * 是原生 replace，失效是静默的）。
+         */
         environment.registerShadowCasterWithPatch(this.material, (shader) => {
             shader.uniforms.uFloorColor = this.uniforms.uFloorColor;
             shader.uniforms.uFloorTint = this.uniforms.uFloorTint;
